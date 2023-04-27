@@ -1,6 +1,5 @@
 use std::{
     fmt::Debug,
-    ops::{Add, Div},
 };
 
 use crate::Point;
@@ -17,7 +16,7 @@ where
 }
 
 pub trait PositionUnit:
-    Div<Output = Self> + Add<Output = Self> + Copy + Clone + Sized + PartialEq + PartialOrd + Debug
+    num_traits::NumOps + Sized + Clone + Copy + num_traits::NumCast + PartialOrd + Debug
 {
     fn convert(value: usize) -> Self;
 }
