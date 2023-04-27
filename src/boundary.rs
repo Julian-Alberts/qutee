@@ -29,7 +29,8 @@ where
     T: PositionUnit,
 {
     /// create a new Boundary from x,y with width and height
-    pub fn new(x: T, y: T, width: T, height: T) -> Self {
+    pub fn new(point: impl Into<Point<T>>, width: T, height: T) -> Self {
+        let Point { x, y } = point.into();
         Self {
             x,
             y,
@@ -44,10 +45,10 @@ where
         let x = self.x;
         let y = self.y;
         [
-            Boundary::new(x, y, half_width, half_height),
-            Boundary::new(x + half_width, y, half_width, half_height),
-            Boundary::new(x, y + half_height, half_width, half_height),
-            Boundary::new(x + half_width, y + half_height, half_width, half_height),
+            Boundary::new((x, y), half_width, half_height),
+            Boundary::new((x + half_width, y), half_width, half_height),
+            Boundary::new((x, y + half_height), half_width, half_height),
+            Boundary::new((x + half_width, y + half_height), half_width, half_height),
         ]
     }
 
@@ -142,7 +143,7 @@ mod tests {
 
     #[test]
     fn split_boundary_equal() {
-        let b = Boundary::new(0, 0, 10, 10);
+        let b = Boundary::new((0, 0), 10, 10);
         let split = b.split();
         assert_eq!(
             split[0],
@@ -189,7 +190,7 @@ mod tests {
     #[test_case(3,1 => false; "Point left")]
     #[test_case(3,5 => false; "Point right")]
     fn boundary_contains_point(x: usize, y: usize) -> bool {
-        let b = Boundary::new(2usize, 2, 2, 2);
+        let b = Boundary::new((2, 2), 2, 2);
         let p = Point { x, y };
         b.contains(&p)
     }
@@ -209,8 +210,8 @@ mod tests {
     #[test_case(2,0,1,1 => true; "on top border")]
     #[test_case(2,5,1,1 => true; "on bottom border")]
     fn boundary_overlaps(x: isize, y: isize, width: isize, height: isize) -> bool {
-        let a = Boundary::new(1,1,4,4);
-        let b = Boundary::new(x, y, width, height);
+        let a = Boundary::new((1,1),4,4);
+        let b = Boundary::new((x, y), width, height);
         a.overlaps(&b)
     }
 }

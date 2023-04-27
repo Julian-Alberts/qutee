@@ -2,11 +2,11 @@
 //! qutree is a small create which implements a quad tree.
 //! ```
 //! use qutree::*;
-//! let mut tree: QuadTree<f64, &str, 5> = QuadTree::new(Boundary::new(-10., -10., 20., 20.));
+//! let mut tree: QuadTree<f64, &str, 5> = QuadTree::new(Boundary::new((-10., -10.), 20., 20.));
 //! assert!(tree.insert((0.5, 0.1), "A").is_ok());
 //! assert!(tree.insert((-1., 1.), "B").is_ok());
 //! assert_eq!(tree.insert((10.1, 5.), "C"), Err(QuadTreeError::OutOfBounds));
-//! let mut query = tree.query(Boundary::new(0.,0.,1.,1.));
+//! let mut query = tree.query(Boundary::new((0.,0.),1.,1.));
 //! assert_eq!(query.next(), Some(&"A"));
 //! assert!(query.next().is_none());
 //! let mut iter = tree.iter();
@@ -122,7 +122,7 @@ mod tests {
 
     #[test]
     fn create_quad_tree() {
-        let boundary = Boundary::new(0, 0, 10, 10);
+        let boundary = Boundary::new((0, 0), 10, 10);
         let tree = QuadTree::<usize, u8, 20>::new(boundary.clone());
         assert_eq!(
             QuadTree {
@@ -137,20 +137,20 @@ mod tests {
 
     #[test]
     fn insert_single() {
-        let mut tree = QuadTree::<usize, u8, 20>::new(Boundary::new(0, 0, 10, 10));
+        let mut tree = QuadTree::<usize, u8, 20>::new(Boundary::new((0, 0), 10, 10));
         assert!(tree.insert((10, 10), 1u8).is_ok());
         assert_eq!(tree.items[0], ((10, 10).into(), 1));
     }
 
     #[test]
     fn insert_out_of_bounds() {
-        let mut tree = QuadTree::<usize, u8, 20>::new(Boundary::new(0, 0, 10, 10));
+        let mut tree = QuadTree::<usize, u8, 20>::new(Boundary::new((0, 0), 10, 10));
         assert_eq!(tree.insert((20, 20), 1u8), Err(QuadTreeError::OutOfBounds));
     }
 
     #[test]
     fn insert_more_than_capacity() {
-        let mut tree = QuadTree::<usize, u8, 1>::new(Boundary::new(0, 0, 10, 10));
+        let mut tree = QuadTree::<usize, u8, 1>::new(Boundary::new((0, 0), 10, 10));
         assert!(tree.quadrants.is_none());
 
         assert!(tree.insert((1, 1), 1).is_ok());
@@ -177,7 +177,7 @@ mod tests {
 
     #[test]
     fn query() {
-        let mut tree = QuadTree::<_, _, 2>::new(Boundary::new(-10, -10, 20, 20));
+        let mut tree = QuadTree::<_, _, 2>::new(Boundary::new((-10, -10), 20, 20));
         let mut expected = Vec::new();
         for i in 1..10 {
             assert!(tree.insert((i, i), 0b0000_0000 | i).is_ok());
@@ -191,7 +191,7 @@ mod tests {
                 expected.push(0b1100_0000 | i);
             }
         }
-        let iter = tree.query(Boundary::new(-2, -2, 4, 4));
+        let iter = tree.query(Boundary::new((-2, -2), 4, 4));
         for i in iter {
             expected.retain(|e| e != i)
         }
@@ -200,7 +200,7 @@ mod tests {
 
     #[test]
     fn iter() {
-        let mut tree = QuadTree::<_, _, 2>::new(Boundary::new(-10, -10, 20, 20));
+        let mut tree = QuadTree::<_, _, 2>::new(Boundary::new((-10, -10), 20, 20));
         let mut expected = Vec::new();
         for i in 1..10 {
             assert!(tree.insert((i, i), 0b0000_0000 | i).is_ok());
