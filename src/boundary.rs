@@ -39,6 +39,26 @@ where
         }
     }
 
+    /// Create a new Area between two points
+    pub fn between_points(p1: impl Into<Point<T>>, p2: impl Into<Point<T>>) -> Self {
+        let mut p1: Point<_> = p1.into();
+        let mut p2: Point<_> = p2.into();
+
+        if p1.x > p2.x {
+            std::mem::swap(&mut p1.x, &mut p2.x)
+        }
+        if p1.y > p2.y {
+            std::mem::swap(&mut p1.y, &mut p2.y)
+        }
+
+        Self {
+            x: p1.x,
+            y: p1.y,
+            width: p2.x - p1.x,
+            height: p2.y - p1.y
+        }
+    }
+
     pub(crate) fn split(&self) -> [Boundary<T>; 4] {
         let half_width = self.width / T::convert(2);
         let half_height = self.height / T::convert(2);
@@ -73,6 +93,7 @@ where
             || *y + *height < self.y
             || *y > self.y + self.height)
     }
+
 }
 
 impl PositionUnit for usize {
@@ -140,6 +161,14 @@ impl PositionUnit for f64 {
 mod tests {
     use crate::{Boundary, Point};
     use test_case::test_case;
+
+    #[test_case(1,1,2,2 => Boundary::new((1,1),1,1); "Simple case")]
+    #[test_case(2,1,1,2 => Boundary::new((1,1),1,1); "Swap x")]
+    #[test_case(1,2,2,1 => Boundary::new((1,1),1,1); "Swap y")]
+    #[test_case(2,2,1,1 => Boundary::new((1,1),1,1); "Swap both")]
+    fn boundary_between_points(x1: usize, y1: usize, x2: usize, y2: usize) -> Boundary {
+        Boundary::between_points((x1,y1), (x2,y2))
+    }
 
     #[test]
     fn split_boundary_equal() {
