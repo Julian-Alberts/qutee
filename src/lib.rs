@@ -3,9 +3,9 @@
 //! ```
 //! use qutree::*;
 //! let mut tree: QuadTree<f64, &str, 5> = QuadTree::new(Boundary::new((-10., -10.), 20., 20.));
-//! assert!(tree.insert((0.5, 0.1), "A").is_ok());
-//! assert!(tree.insert((-1., 1.), "B").is_ok());
-//! assert_eq!(tree.insert((10.1, 5.), "C"), Err(QuadTreeError::OutOfBounds));
+//! assert!(tree.insert_at((0.5, 0.1), "A").is_ok());
+//! assert!(tree.insert_at((-1., 1.), "B").is_ok());
+//! assert_eq!(tree.insert_at((10.1, 5.), "C"), Err(QuadTreeError::OutOfBounds));
 //! let mut query = tree.query(Boundary::new((0.,0.),1.,1.));
 //! assert_eq!(query.next(), Some(&"A"));
 //! assert!(query.next().is_none());
@@ -70,7 +70,7 @@ where
     }
 
     /// Insert new item into the quad tree.
-    pub fn insert(&mut self, point: impl Into<Point<PU>>, value: Item) -> Result<(), QuadTreeError> {
+    pub fn insert_at(&mut self, point: impl Into<Point<PU>>, value: Item) -> Result<(), QuadTreeError> {
         let point = point.into();
         if !self.boundary.contains(&point) {
             return Err(QuadTreeError::OutOfBounds);
@@ -90,7 +90,7 @@ where
             let Some(sub_tree) = quads.iter_mut().find(|tree| tree.boundary.contains(&point)) else {
                 return Err(QuadTreeError::OutOfBounds)
             };
-            return sub_tree.insert(point, value);
+            return sub_tree.insert_at(point, value);
         }
         self.items.push((point, value));
         Ok(())
@@ -138,14 +138,14 @@ mod tests {
     #[test]
     fn insert_single() {
         let mut tree = QuadTree::<usize, u8, 20>::new(Boundary::new((0, 0), 10, 10));
-        assert!(tree.insert((10, 10), 1u8).is_ok());
+        assert!(tree.insert_at((10, 10), 1u8).is_ok());
         assert_eq!(tree.items[0], ((10, 10).into(), 1));
     }
 
     #[test]
     fn insert_out_of_bounds() {
         let mut tree = QuadTree::<usize, u8, 20>::new(Boundary::new((0, 0), 10, 10));
-        assert_eq!(tree.insert((20, 20), 1u8), Err(QuadTreeError::OutOfBounds));
+        assert_eq!(tree.insert_at((20, 20), 1u8), Err(QuadTreeError::OutOfBounds));
     }
 
     #[test]
@@ -153,11 +153,11 @@ mod tests {
         let mut tree = QuadTree::<usize, u8, 1>::new(Boundary::new((0, 0), 10, 10));
         assert!(tree.quadrants.is_none());
 
-        assert!(tree.insert((1, 1), 1).is_ok());
+        assert!(tree.insert_at((1, 1), 1).is_ok());
         assert!(tree.quadrants.is_none());
         assert_eq!(tree.items.len(), 1);
 
-        assert!(tree.insert((2, 2), 1).is_ok());
+        assert!(tree.insert_at((2, 2), 1).is_ok());
         assert_eq!(tree.items.len(), 1);
         assert!(tree.quadrants.is_some());
         let quads = tree.quadrants.as_ref().unwrap();
@@ -166,7 +166,7 @@ mod tests {
         assert_eq!(quads[2].items.len(), 0);
         assert_eq!(quads[3].items.len(), 0);
 
-        assert!(tree.insert((7, 7), 1).is_ok());
+        assert!(tree.insert_at((7, 7), 1).is_ok());
         assert!(tree.quadrants.is_some());
         let quads = tree.quadrants.as_ref().unwrap();
         assert_eq!(quads[0].items.len(), 1);
@@ -180,10 +180,10 @@ mod tests {
         let mut tree = QuadTree::<_, _, 2>::new(Boundary::new((-10, -10), 20, 20));
         let mut expected = Vec::new();
         for i in 1..10 {
-            assert!(tree.insert((i, i), 0b0000_0000 | i).is_ok());
-            assert!(tree.insert((-i, i), 0b1000_0000 | i).is_ok());
-            assert!(tree.insert((i, -i), 0b0100_0000 | i).is_ok());
-            assert!(tree.insert((-i, -i), 0b1100_0000 | i).is_ok());
+            assert!(tree.insert_at((i, i), 0b0000_0000 | i).is_ok());
+            assert!(tree.insert_at((-i, i), 0b1000_0000 | i).is_ok());
+            assert!(tree.insert_at((i, -i), 0b0100_0000 | i).is_ok());
+            assert!(tree.insert_at((-i, -i), 0b1100_0000 | i).is_ok());
             if i <= 2 {
                 expected.push(0b0000_0000 | i);
                 expected.push(0b1000_0000 | i);
@@ -203,10 +203,10 @@ mod tests {
         let mut tree = QuadTree::<_, _, 2>::new(Boundary::new((-10, -10), 20, 20));
         let mut expected = Vec::new();
         for i in 1..10 {
-            assert!(tree.insert((i, i), 0b0000_0000 | i).is_ok());
-            assert!(tree.insert((-i, i), 0b1000_0000 | i).is_ok());
-            assert!(tree.insert((i, -i), 0b0100_0000 | i).is_ok());
-            assert!(tree.insert((-i, -i), 0b1100_0000 | i).is_ok());
+            assert!(tree.insert_at((i, i), 0b0000_0000 | i).is_ok());
+            assert!(tree.insert_at((-i, i), 0b1000_0000 | i).is_ok());
+            assert!(tree.insert_at((i, -i), 0b0100_0000 | i).is_ok());
+            assert!(tree.insert_at((-i, -i), 0b1100_0000 | i).is_ok());
             expected.push(0b0000_0000 | i);
             expected.push(0b1000_0000 | i);
             expected.push(0b0100_0000 | i);
