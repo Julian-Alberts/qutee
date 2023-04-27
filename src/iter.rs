@@ -7,8 +7,8 @@ pub struct Query<'a, PU, Item, const CAPACITY: usize>
 where
     PU: PositionUnit,
 {
-    quadrants: Option<Vec<&'a QuadTree<PU, Item, CAPACITY>>>,
-    items: Vec<&'a (Point<PU>, Item)>,
+    quadrants: Option<&'a[QuadTree<PU, Item, CAPACITY>]>,
+    items: &'a[(Point<PU>, Item)],
     current_sub_query: Option<Box<Query<'a, PU, Item, CAPACITY>>>,
     boundary: Boundary<PU>,
 }
@@ -20,8 +20,8 @@ where
 {
     pub(super) fn new(tree: &'a QuadTree<PU, Item, CAPACITY>, boundary: Boundary<PU>) -> Self {
         Self {
-            items: tree.items.iter().collect(),
-            quadrants: tree.quadrants.as_ref().map(|q| q.iter().collect()),
+            items: tree.items.as_slice(),
+            quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
             current_sub_query: None,
             boundary,
         }
@@ -33,7 +33,8 @@ where
             return None;
         }
         while !quadrants.is_empty() {
-            let q = quadrants.remove(0);
+            let q = &quadrants[0];
+            *quadrants = &quadrants[1..];
             if q.boundary.overlaps(&self.boundary) {
                 return Some(Box::new(q.query(self.boundary.clone())));
             }
@@ -51,7 +52,8 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         while !self.items.is_empty() {
-            let item = self.items.remove(0);
+            let item = &self.items[0];
+            self.items = &self.items[1..];
             if self.boundary.contains(&item.0) {
                 return Some(&item.1);
             }
@@ -78,8 +80,8 @@ pub struct Iter<'a, PU, Item, const CAPACITY: usize>
 where
     PU: PositionUnit,
 {
-    quadrants: Option<Vec<&'a QuadTree<PU, Item, CAPACITY>>>,
-    items: Vec<&'a Item>,
+    quadrants: Option<&'a [QuadTree<PU, Item, CAPACITY>]>,
+    items: &'a[(Point<PU>, Item)],
     current_sub_query: Option<Box<Iter<'a, PU, Item, CAPACITY>>>,
 }
 
@@ -90,8 +92,8 @@ where
 {
     pub(super) fn new(tree: &'a QuadTree<PU, Item, CAPACITY>) -> Self {
         Self {
-            items: tree.items.iter().map(|i| &i.1).collect(),
-            quadrants: tree.quadrants.as_ref().map(|q| q.iter().collect()),
+            items: tree.items.as_slice(),
+            quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
             current_sub_query: None,
         }
     }
@@ -102,7 +104,8 @@ where
             return None;
         }
         while !quadrants.is_empty() {
-            let q = quadrants.remove(0);
+            let q = &quadrants[0];
+            *quadrants = &quadrants[1..];
             return Some(Box::new(q.iter()));
         }
         None
@@ -118,7 +121,8 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         while !self.items.is_empty() {
-            let item = self.items.remove(0);
+            let item = &self.items[0].1;
+            self.items = &self.items[1..];
             return Some(&item);
         }
         if self.current_sub_query.is_none() {
