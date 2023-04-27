@@ -4,6 +4,7 @@ use std::{
 
 use crate::Point;
 
+/// A Area
 #[derive(Debug, Clone, PartialEq)]
 pub struct Boundary<T = usize>
 where
@@ -15,9 +16,11 @@ where
     height: T,
 }
 
+/// This trait is required for coordinates
 pub trait PositionUnit:
     num_traits::NumOps + Sized + Clone + Copy + num_traits::NumCast + PartialOrd + Debug
 {
+    /// Convert a usize into self
     fn convert(value: usize) -> Self;
 }
 
@@ -25,6 +28,7 @@ impl<T> Boundary<T>
 where
     T: PositionUnit,
 {
+    /// create a new Boundary from x,y with width and height
     pub fn new(x: T, y: T, width: T, height: T) -> Self {
         Self {
             x,
@@ -34,7 +38,7 @@ where
         }
     }
 
-    pub fn split(&self) -> [Boundary<T>; 4] {
+    pub(crate) fn split(&self) -> [Boundary<T>; 4] {
         let half_width = self.width / T::convert(2);
         let half_height = self.height / T::convert(2);
         let x = self.x;
@@ -47,7 +51,7 @@ where
         ]
     }
 
-    pub fn contains(&self, point: &Point<T>) -> bool {
+    pub(crate) fn contains(&self, point: &Point<T>) -> bool {
         !(point.x < self.x
             || point.x > self.x + self.width
             || point.y < self.y

@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use crate::{PositionUnit, Point, QuadTree, Boundary};
 
-
+/// Query Iterator
 pub struct Query<'a, PU, Item, const CAPACITY: usize>
 where
     PU: PositionUnit,
@@ -73,6 +73,7 @@ where
     }
 }
 
+/// Iterator over all items
 pub struct Iter<'a, PU, Item, const CAPACITY: usize>
 where
     PU: PositionUnit,

@@ -1,3 +1,20 @@
+#![warn(missing_docs)]
+//! qutree is a small create which implements a quad tree.
+//! ```
+//! use qutree::*;
+//! let mut tree: QuadTree<f64, &str, 5> = QuadTree::new(Boundary::new(-10., -10., 20., 20.));
+//! assert!(tree.insert((0.5, 0.1), "A").is_ok());
+//! assert!(tree.insert((-1., 1.), "B").is_ok());
+//! assert_eq!(tree.insert((10.1, 5.), "C"), Err(QuadTreeError::OutOfBounds));
+//! let mut query = tree.query(Boundary::new(0.,0.,1.,1.));
+//! assert_eq!(query.next(), Some(&"A"));
+//! assert!(query.next().is_none());
+//! let mut iter = tree.iter();
+//! assert_eq!(iter.next(), Some(&"A"));
+//! assert_eq!(iter.next(), Some(&"B"));
+//! assert!(iter.next().is_none());
+//! ```
+
 mod boundary;
 mod iter;
 
@@ -6,6 +23,11 @@ use std::fmt::Debug;
 pub use boundary::*;
 pub use iter::*;
 
+/// 
+/// # Parameter
+/// PU: The type used for coordinates
+/// Item: The type to be saved
+/// CAPACITY: The maximum capacity of each level
 #[derive(PartialEq, Debug)]
 pub struct QuadTree<PU, Item, const CAPACITY: usize>
 where
@@ -16,11 +38,14 @@ where
     items: Vec<(Point<PU>, Item)>,
 }
 
+/// Possible errors
 #[derive(Debug, PartialEq)]
 pub enum QuadTreeError {
+    /// Point is out of bounds
     OutOfBounds,
 }
 
+/// A point in two dimensional space
 #[derive(Debug, PartialEq)]
 pub struct Point<T>
 where
@@ -34,7 +59,8 @@ impl<PU, Item, const CAPACITY: usize> QuadTree<PU, Item, CAPACITY>
 where
     PU: PositionUnit,
     Item: Debug,
-{
+{   
+    /// Create a new quad tree for a given area.
     pub fn new(boundary: Boundary<PU>) -> Self {
         Self {
             boundary,
@@ -43,6 +69,7 @@ where
         }
     }
 
+    /// Insert new item into the quad tree.
     pub fn insert(&mut self, point: impl Into<Point<PU>>, value: Item) -> Result<(), QuadTreeError> {
         let point = point.into();
         if !self.boundary.contains(&point) {
@@ -69,10 +96,12 @@ where
         Ok(())
     }
 
+    /// Get all items in a given area.
     pub fn query<'a>(&'a self, boundary: Boundary<PU>) -> Query<'a, PU, Item, CAPACITY> {
         Query::new(self, boundary)
     }
 
+    /// Get an iterator over all items.
     pub fn iter<'a>(&'a self) -> Iter<'a, PU, Item, CAPACITY> {
         Iter::new(self)
     }
