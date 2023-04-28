@@ -26,7 +26,7 @@ assert_eq!(iter.next(), Some(&"B"));
 assert!(iter.next().is_none());
 ```
 
-## Important data types
+## Important types
 ### QuadTree
 The quad tree its self. A tree requires three important informations:
 1. What type do you want to use for your positions? This can be any primitive number type.
@@ -47,7 +47,7 @@ Insert a item at a given point. Points can be created by using `Point::new(PU, P
 
 Returns a iterator over all items inside the given boundary.
 
-<b>iter() -> Iter</q>
+<b>iter() -> Iter</b>
 
 Returns an iterator over all items inside the tree
 
