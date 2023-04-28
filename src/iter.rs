@@ -1,12 +1,12 @@
-use crate::{PositionUnit, Point, QuadTree, Boundary};
+use crate::{Boundary, Point, PositionUnit, QuadTree};
 
 /// Query Iterator
 pub struct Query<'a, PU, Item, const CAPACITY: usize>
 where
     PU: PositionUnit,
 {
-    quadrants: Option<&'a[QuadTree<PU, Item, CAPACITY>]>,
-    items: &'a[(Point<PU>, Item)],
+    quadrants: Option<&'a [QuadTree<PU, Item, CAPACITY>]>,
+    items: &'a [(Point<PU>, Item)],
     current_sub_query: Option<Box<Query<'a, PU, Item, CAPACITY>>>,
     boundary: Boundary<PU>,
 }
@@ -77,7 +77,7 @@ where
     PU: PositionUnit,
 {
     quadrants: Option<&'a [QuadTree<PU, Item, CAPACITY>]>,
-    items: &'a[(Point<PU>, Item)],
+    items: &'a [(Point<PU>, Item)],
     current_sub_query: Option<Box<Iter<'a, PU, Item, CAPACITY>>>,
 }
 

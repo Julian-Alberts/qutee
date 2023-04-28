@@ -1,6 +1,4 @@
-use std::{
-    fmt::Debug,
-};
+use std::fmt::Debug;
 
 use crate::Point;
 
@@ -10,19 +8,14 @@ pub struct Boundary<T = usize>
 where
     T: PositionUnit,
 {
-    x: T,
-    y: T,
-    width: T,
-    height: T,
+    p1: Point<T>,
+    p2: Point<T>,
 }
 
 /// This trait is required for coordinates
 pub trait PositionUnit:
     num_traits::NumOps + Sized + Clone + Copy + num_traits::NumCast + PartialOrd + Debug
-{
-    /// Convert a usize into self
-    fn convert(value: usize) -> Self;
-}
+{}
 
 impl<T> Boundary<T>
 where
@@ -30,13 +23,9 @@ where
 {
     /// create a new Boundary from x,y with width and height
     pub fn new(point: impl Into<Point<T>>, width: T, height: T) -> Self {
-        let Point { x, y } = point.into();
-        Self {
-            x,
-            y,
-            width,
-            height,
-        }
+        let p1 = point.into();
+        let p2 = (p1.x + width, p1.y + height).into();
+        Self { p1, p2 }
     }
 
     /// Create a new Area between two points
@@ -51,111 +40,47 @@ where
             std::mem::swap(&mut p1.y, &mut p2.y)
         }
 
-        Self {
-            x: p1.x,
-            y: p1.y,
-            width: p2.x - p1.x,
-            height: p2.y - p1.y
-        }
+        Self { p1, p2 }
     }
 
     pub(crate) fn split(&self) -> [Boundary<T>; 4] {
-        let half_width = self.width / T::convert(2);
-        let half_height = self.height / T::convert(2);
-        let x = self.x;
-        let y = self.y;
+        let dx = self.p2.x - self.p1.x;
+        let dy = self.p2.y - self.p1.y;
+        let two = T::from(2).expect("Could not convert 2 to required type");
+        let half_dx = dx / two;
+        let half_dy = dy / two;
         [
-            Boundary::new((x, y), half_width, half_height),
-            Boundary::new((x + half_width, y), half_width, half_height),
-            Boundary::new((x, y + half_height), half_width, half_height),
-            Boundary::new((x + half_width, y + half_height), half_width, half_height),
+            Boundary::new(self.p1.clone(), half_dx, half_dy),
+            Boundary::new((self.p1.x + half_dx, self.p1.y), half_dx, half_dy),
+            Boundary::new((self.p1.x, self.p1.y + half_dy), half_dx, half_dy),
+            Boundary::new((self.p1.x + half_dx, self.p1.y + half_dy), half_dx, half_dy),
         ]
     }
 
     pub(crate) fn contains(&self, point: &Point<T>) -> bool {
-        !(point.x < self.x
-            || point.x > self.x + self.width
-            || point.y < self.y
-            || point.y > self.y + self.height)
+        !(point.x < self.p1.x || point.x > self.p2.x || point.y < self.p1.y || point.y > self.p2.y)
     }
 
-    pub(crate) fn overlaps(
-        &self,
-        Boundary {
-            x,
-            y,
-            width,
-            height,
-        }: &Boundary<T>,
-    ) -> bool {
-        !(*x + *width < self.x
-            || *x > self.x + self.width
-            || *y + *height < self.y
-            || *y > self.y + self.height)
+    pub(crate) fn overlaps(&self, Boundary { p1, p2 }: &Boundary<T>) -> bool {
+        !(p2.x < self.p1.x || p1.x > self.p2.x || p2.y < self.p1.y || p1.y > self.p2.y)
     }
-
 }
 
-impl PositionUnit for usize {
-    fn convert(value: usize) -> Self {
-        value
-    }
-}
-impl PositionUnit for isize {
-    fn convert(value: usize) -> Self {
-        value as isize
-    }
-}
-impl PositionUnit for u8 {
-    fn convert(value: usize) -> Self {
-        value as u8
-    }
-}
-impl PositionUnit for u16 {
-    fn convert(value: usize) -> Self {
-        value as u16
-    }
-}
-impl PositionUnit for u32 {
-    fn convert(value: usize) -> Self {
-        value as u32
-    }
-}
-impl PositionUnit for u64 {
-    fn convert(value: usize) -> Self {
-        value as u64
-    }
-}
-impl PositionUnit for i8 {
-    fn convert(value: usize) -> Self {
-        value as i8
-    }
-}
-impl PositionUnit for i16 {
-    fn convert(value: usize) -> Self {
-        value as i16
-    }
-}
-impl PositionUnit for i32 {
-    fn convert(value: usize) -> Self {
-        value as i32
-    }
-}
-impl PositionUnit for i64 {
-    fn convert(value: usize) -> Self {
-        value as i64
-    }
-}
-impl PositionUnit for f32 {
-    fn convert(value: usize) -> Self {
-        value as f32
-    }
-}
-impl PositionUnit for f64 {
-    fn convert(value: usize) -> Self {
-        value as f64
-    }
-}
+impl PositionUnit for usize {}
+impl PositionUnit for isize {}
+impl PositionUnit for u8 {}
+impl PositionUnit for u16 {}
+impl PositionUnit for u32 {}
+impl PositionUnit for u64 {}
+impl PositionUnit for u128 {}
+impl PositionUnit for i8 {}
+impl PositionUnit for i16 {}
+impl PositionUnit for i32 {}
+impl PositionUnit for i64 {}
+impl PositionUnit for i128 {}
+impl PositionUnit for f32 {}
+impl PositionUnit for f64 {}
+
 
 #[cfg(test)]
 mod tests {
@@ -167,7 +92,7 @@ mod tests {
     #[test_case(1,2,2,1 => Boundary::new((1,1),1,1); "Swap y")]
     #[test_case(2,2,1,1 => Boundary::new((1,1),1,1); "Swap both")]
     fn boundary_between_points(x1: usize, y1: usize, x2: usize, y2: usize) -> Boundary {
-        Boundary::between_points((x1,y1), (x2,y2))
+        Boundary::between_points((x1, y1), (x2, y2))
     }
 
     #[test]
@@ -176,39 +101,19 @@ mod tests {
         let split = b.split();
         assert_eq!(
             split[0],
-            Boundary {
-                x: 0,
-                y: 0,
-                width: 5,
-                height: 5
-            }
+            Boundary::new((0,0),5,5)
         );
         assert_eq!(
             split[1],
-            Boundary {
-                x: 5,
-                y: 0,
-                width: 5,
-                height: 5
-            }
+            Boundary::new((5,0),5,5)
         );
         assert_eq!(
             split[2],
-            Boundary {
-                x: 0,
-                y: 5,
-                width: 5,
-                height: 5
-            }
+            Boundary::new((0,5),5,5)
         );
         assert_eq!(
             split[3],
-            Boundary {
-                x: 5,
-                y: 5,
-                width: 5,
-                height: 5
-            }
+            Boundary::new((5,5),5,5)
         );
     }
 
@@ -239,7 +144,7 @@ mod tests {
     #[test_case(2,0,1,1 => true; "on top border")]
     #[test_case(2,5,1,1 => true; "on bottom border")]
     fn boundary_overlaps(x: isize, y: isize, width: isize, height: isize) -> bool {
-        let a = Boundary::new((1,1),4,4);
+        let a = Boundary::new((1, 1), 4, 4);
         let b = Boundary::new((x, y), width, height);
         a.overlaps(&b)
     }

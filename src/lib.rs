@@ -23,7 +23,7 @@ use std::fmt::Debug;
 pub use boundary::*;
 pub use iter::*;
 
-/// 
+///
 /// # Parameter
 /// PU: The type used for coordinates
 /// Item: The type to be saved
@@ -46,7 +46,7 @@ pub enum QuadTreeError {
 }
 
 /// A point in two dimensional space
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Point<T>
 where
     T: PositionUnit,
@@ -58,7 +58,7 @@ where
 impl<PU, Item, const CAPACITY: usize> QuadTree<PU, Item, CAPACITY>
 where
     PU: PositionUnit,
-{   
+{
     /// Create a new quad tree for a given area.
     pub fn new(boundary: Boundary<PU>) -> Self {
         Self {
@@ -69,7 +69,11 @@ where
     }
 
     /// Insert new item into the quad tree.
-    pub fn insert_at(&mut self, point: impl Into<Point<PU>>, value: Item) -> Result<(), QuadTreeError> {
+    pub fn insert_at(
+        &mut self,
+        point: impl Into<Point<PU>>,
+        value: Item,
+    ) -> Result<(), QuadTreeError> {
         let point = point.into();
         if !self.boundary.contains(&point) {
             return Err(QuadTreeError::OutOfBounds);
@@ -144,7 +148,10 @@ mod tests {
     #[test]
     fn insert_out_of_bounds() {
         let mut tree = QuadTree::<usize, u8, 20>::new(Boundary::new((0, 0), 10, 10));
-        assert_eq!(tree.insert_at((20, 20), 1u8), Err(QuadTreeError::OutOfBounds));
+        assert_eq!(
+            tree.insert_at((20, 20), 1u8),
+            Err(QuadTreeError::OutOfBounds)
+        );
     }
 
     #[test]
