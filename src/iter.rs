@@ -1,5 +1,3 @@
-use std::fmt::Debug;
-
 use crate::{PositionUnit, Point, QuadTree, Boundary};
 
 /// Query Iterator
@@ -16,7 +14,6 @@ where
 impl<'a, PU, Item, const CAPACITY: usize> Query<'a, PU, Item, CAPACITY>
 where
     PU: PositionUnit,
-    Item: Debug,
 {
     pub(super) fn new(tree: &'a QuadTree<PU, Item, CAPACITY>, boundary: Boundary<PU>) -> Self {
         Self {
@@ -46,7 +43,6 @@ where
 impl<'a, PU, Item, const CAPACITY: usize> Iterator for Query<'a, PU, Item, CAPACITY>
 where
     PU: PositionUnit,
-    Item: Debug,
 {
     type Item = &'a Item;
 
@@ -88,7 +84,6 @@ where
 impl<'a, PU, Item, const CAPACITY: usize> Iter<'a, PU, Item, CAPACITY>
 where
     PU: PositionUnit,
-    Item: Debug,
 {
     pub(super) fn new(tree: &'a QuadTree<PU, Item, CAPACITY>) -> Self {
         Self {
@@ -115,7 +110,6 @@ where
 impl<'a, PU, Item, const CAPACITY: usize> Iterator for Iter<'a, PU, Item, CAPACITY>
 where
     PU: PositionUnit,
-    Item: Debug,
 {
     type Item = &'a Item;
 

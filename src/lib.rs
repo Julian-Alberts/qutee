@@ -58,7 +58,6 @@ where
 impl<PU, Item, const CAPACITY: usize> QuadTree<PU, Item, CAPACITY>
 where
     PU: PositionUnit,
-    Item: Debug,
 {   
     /// Create a new quad tree for a given area.
     pub fn new(boundary: Boundary<PU>) -> Self {
@@ -76,15 +75,15 @@ where
             return Err(QuadTreeError::OutOfBounds);
         }
         if self.quadrants.is_none() && self.items.len() >= CAPACITY {
-            self.quadrants = Some(
-                self.boundary
-                    .split()
-                    .into_iter()
-                    .map(|b| QuadTree::new(b))
-                    .collect::<Vec<_>>()
-                    .try_into()
-                    .expect("Boundary did not split into 4"),
-            );
+            let Ok(quadrants) = self.boundary
+                .split()
+                .into_iter()
+                .map(|b| QuadTree::new(b))
+                .collect::<Vec<_>>()
+                .try_into() else {
+                    unreachable!("Boundary did not split into 4")
+                };
+            self.quadrants = Some(quadrants);
         }
         if let Some(quads) = &mut self.quadrants {
             let Some(sub_tree) = quads.iter_mut().find(|tree| tree.boundary.contains(&point)) else {
