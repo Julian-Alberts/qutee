@@ -1,7 +1,7 @@
 # QuTree
 
 QuTree is a simple implementation of a quad tree.
-The advantage of QuTree over most over implementations is 
+The advantage of QuTree over most other implementations is 
 that you can choose which data type you want to use as your coordinates.
 By default all basic number types are supported as coordinates. 
 Values do not require any special traits to be used.

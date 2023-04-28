@@ -6,7 +6,7 @@
 //! assert!(tree.insert_at((0.5, 0.1), "A").is_ok());
 //! assert!(tree.insert_at((-1., 1.), "B").is_ok());
 //! assert_eq!(tree.insert_at((10.1, 5.), "C"), Err(QuadTreeError::OutOfBounds));
-//! let mut query = tree.query(Boundary::new((0.,0.),1.,1.));
+//! let mut query = tree.query(Boundary::between_points((0.,0.),(1.,1.)));
 //! assert_eq!(query.next(), Some(&"A"));
 //! assert!(query.next().is_none());
 //! let mut iter = tree.iter();
