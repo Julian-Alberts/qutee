@@ -1,7 +1,7 @@
 #![warn(missing_docs)]
-//! qutree is a small create which implements a quad tree.
+//! qutee is a small create which implements a quad tree.
 //! ```
-//! use qutree::*;
+//! use qutee::*;
 //! let mut tree: QuadTree<f64, &str, 5> = QuadTree::new(Boundary::new((-10., -10.), 20., 20.));
 //! assert!(tree.insert_at((0.5, 0.1), "A").is_ok());
 //! assert!(tree.insert_at((-1., 1.), "B").is_ok());
