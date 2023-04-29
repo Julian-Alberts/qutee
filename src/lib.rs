@@ -60,6 +60,15 @@ where
     y: T,
 }
 
+impl<T> Point<T>
+where
+    T: PositionUnit,
+{
+    pub fn new(x: T, y: T) -> Self {
+        Self { x, y }
+    }
+}
+
 impl<PU, Item, Cap> QuadTree<PU, Item, Cap>
 where
     Cap: Capacity,
