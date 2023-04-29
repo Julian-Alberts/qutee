@@ -6,7 +6,7 @@ that you can choose which data type you want to use as your coordinates.
 By default all primitive number types are supported as coordinates. 
 Values do not require any special traits to be used.
 
-#Example
+## Example
 ```rust
 use qutee::*;
 // Create a new quad tree where the areas top left corner is at -10, -10 and with a width and height of 20.
