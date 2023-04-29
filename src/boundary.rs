@@ -15,7 +15,8 @@ where
 /// This trait is required for coordinates
 pub trait PositionUnit:
     num_traits::NumOps + Sized + Clone + Copy + num_traits::NumCast + PartialOrd + Debug
-{}
+{
+}
 
 impl<T> Boundary<T>
 where
@@ -81,7 +82,6 @@ impl PositionUnit for i128 {}
 impl PositionUnit for f32 {}
 impl PositionUnit for f64 {}
 
-
 #[cfg(test)]
 mod tests {
     use crate::{Boundary, Point};
@@ -99,22 +99,10 @@ mod tests {
     fn split_boundary_equal() {
         let b = Boundary::new((0, 0), 10, 10);
         let split = b.split();
-        assert_eq!(
-            split[0],
-            Boundary::new((0,0),5,5)
-        );
-        assert_eq!(
-            split[1],
-            Boundary::new((5,0),5,5)
-        );
-        assert_eq!(
-            split[2],
-            Boundary::new((0,5),5,5)
-        );
-        assert_eq!(
-            split[3],
-            Boundary::new((5,5),5,5)
-        );
+        assert_eq!(split[0], Boundary::new((0, 0), 5, 5));
+        assert_eq!(split[1], Boundary::new((5, 0), 5, 5));
+        assert_eq!(split[2], Boundary::new((0, 5), 5, 5));
+        assert_eq!(split[3], Boundary::new((5, 5), 5, 5));
     }
 
     #[test_case(3,3 => true; "Contains point")]

@@ -16,8 +16,8 @@
 //! assert!(iter.next().is_none());
 //! ```
 
-mod bounds;
 mod boundary;
+mod bounds;
 mod iter;
 
 use std::fmt::Debug;
@@ -40,7 +40,7 @@ where
     boundary: Boundary<PU>,
     quadrants: Option<Box<[QuadTree<PU, Item, Cap>; 4]>>,
     items: Vec<(Point<PU>, Item)>,
-    capacity: Cap
+    capacity: Cap,
 }
 
 /// Possible errors
@@ -71,7 +71,7 @@ where
             boundary,
             quadrants: None,
             items: Vec::with_capacity(capacity.capacity()),
-            capacity
+            capacity,
         }
     }
 
@@ -107,12 +107,12 @@ where
     }
 
     /// Get all items in a given area.
-    pub fn query<'a>(&'a self, boundary: Boundary<PU>) -> Query<'a, PU, Item, Cap> {
+    pub fn query(&self, boundary: Boundary<PU>) -> Query<'_, PU, Item, Cap> {
         Query::new(self, boundary)
     }
 
     /// Get an iterator over all items.
-    pub fn iter<'a>(&'a self) -> Iter<'a, PU, Item, Cap> {
+    pub fn iter(&self) -> Iter<'_, PU, Item, Cap> {
         Iter::new(self)
     }
 }
@@ -155,7 +155,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{Boundary, Point, PositionUnit, QuadTree, QuadTreeError, bounds::CompileTimeCap};
+    use crate::{bounds::CompileTimeCap, Boundary, Point, PositionUnit, QuadTree, QuadTreeError};
 
     #[test]
     fn create_quad_tree() {
@@ -221,12 +221,12 @@ mod tests {
         let mut tree = QuadTree::new(Boundary::new((-10, -10), 20, 20), 2);
         let mut expected = Vec::new();
         for i in 1..10 {
-            assert!(tree.insert_at((i, i), 0b0000_0000 | i).is_ok());
+            assert!(tree.insert_at((i, i), i).is_ok());
             assert!(tree.insert_at((-i, i), 0b1000_0000 | i).is_ok());
             assert!(tree.insert_at((i, -i), 0b0100_0000 | i).is_ok());
             assert!(tree.insert_at((-i, -i), 0b1100_0000 | i).is_ok());
             if i <= 2 {
-                expected.push(0b0000_0000 | i);
+                expected.push(i);
                 expected.push(0b1000_0000 | i);
                 expected.push(0b0100_0000 | i);
                 expected.push(0b1100_0000 | i);
@@ -244,11 +244,11 @@ mod tests {
         let mut tree = QuadTree::new(Boundary::new((-10, -10), 20, 20), 2);
         let mut expected = Vec::new();
         for i in 1..10 {
-            assert!(tree.insert_at((i, i), 0b0000_0000 | i).is_ok());
+            assert!(tree.insert_at((i, i), i).is_ok());
             assert!(tree.insert_at((-i, i), 0b1000_0000 | i).is_ok());
             assert!(tree.insert_at((i, -i), 0b0100_0000 | i).is_ok());
             assert!(tree.insert_at((-i, -i), 0b1100_0000 | i).is_ok());
-            expected.push(0b0000_0000 | i);
+            expected.push(i);
             expected.push(0b1000_0000 | i);
             expected.push(0b0100_0000 | i);
             expected.push(0b1100_0000 | i);

@@ -5,13 +5,11 @@ pub trait Capacity: Clone + Copy {
 /// A Capacity known at compile time
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct CompileTimeCap<const CAP: usize>;
-impl <const CAP: usize> Capacity for CompileTimeCap<CAP> {
-
+impl<const CAP: usize> Capacity for CompileTimeCap<CAP> {
     #[inline]
     fn capacity(&self) -> usize {
         CAP
     }
-
 }
 
 /// A Capacity known at runtime
@@ -23,4 +21,3 @@ impl Capacity for RunTimeCap {
         self.0
     }
 }
-

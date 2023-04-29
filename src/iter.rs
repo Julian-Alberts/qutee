@@ -1,4 +1,4 @@
-use crate::{Boundary, Point, PositionUnit, QuadTree, bounds::Capacity};
+use crate::{bounds::Capacity, Boundary, Point, PositionUnit, QuadTree};
 
 /// Query Iterator
 pub struct Query<'a, PU, Item, Cap>
@@ -103,7 +103,7 @@ where
         if quadrants.is_empty() {
             return None;
         }
-        while !quadrants.is_empty() {
+        if !quadrants.is_empty() {
             let q = &quadrants[0];
             *quadrants = &quadrants[1..];
             return Some(Box::new(q.iter()));
@@ -120,10 +120,10 @@ where
     type Item = &'a Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while !self.items.is_empty() {
+        if !self.items.is_empty() {
             let item = &self.items[0].1;
             self.items = &self.items[1..];
-            return Some(&item);
+            return Some(item);
         }
         if self.current_sub_query.is_none() {
             self.current_sub_query = self.find_next_quadrant();
