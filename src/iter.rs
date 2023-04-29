@@ -1,21 +1,23 @@
-use crate::{Boundary, Point, PositionUnit, QuadTree};
+use crate::{Boundary, Point, PositionUnit, QuadTree, bounds::Capacity};
 
 /// Query Iterator
-pub struct Query<'a, PU, Item, const CAPACITY: usize>
+pub struct Query<'a, PU, Item, Cap>
 where
+    Cap: Capacity,
     PU: PositionUnit,
 {
-    quadrants: Option<&'a [QuadTree<PU, Item, CAPACITY>]>,
+    quadrants: Option<&'a [QuadTree<PU, Item, Cap>]>,
     items: &'a [(Point<PU>, Item)],
-    current_sub_query: Option<Box<Query<'a, PU, Item, CAPACITY>>>,
+    current_sub_query: Option<Box<Query<'a, PU, Item, Cap>>>,
     boundary: Boundary<PU>,
 }
 
-impl<'a, PU, Item, const CAPACITY: usize> Query<'a, PU, Item, CAPACITY>
+impl<'a, PU, Item, Cap> Query<'a, PU, Item, Cap>
 where
+    Cap: Capacity,
     PU: PositionUnit,
 {
-    pub(super) fn new(tree: &'a QuadTree<PU, Item, CAPACITY>, boundary: Boundary<PU>) -> Self {
+    pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>, boundary: Boundary<PU>) -> Self {
         Self {
             items: tree.items.as_slice(),
             quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
@@ -24,7 +26,7 @@ where
         }
     }
 
-    fn find_next_quadrant(&mut self) -> Option<Box<Query<'a, PU, Item, CAPACITY>>> {
+    fn find_next_quadrant(&mut self) -> Option<Box<Query<'a, PU, Item, Cap>>> {
         let quadrants = self.quadrants.as_mut()?;
         if quadrants.is_empty() {
             return None;
@@ -40,8 +42,9 @@ where
     }
 }
 
-impl<'a, PU, Item, const CAPACITY: usize> Iterator for Query<'a, PU, Item, CAPACITY>
+impl<'a, PU, Item, Cap> Iterator for Query<'a, PU, Item, Cap>
 where
+    Cap: Capacity,
     PU: PositionUnit,
 {
     type Item = &'a Item;
@@ -72,20 +75,22 @@ where
 }
 
 /// Iterator over all items
-pub struct Iter<'a, PU, Item, const CAPACITY: usize>
+pub struct Iter<'a, PU, Item, Cap>
 where
+    Cap: Capacity,
     PU: PositionUnit,
 {
-    quadrants: Option<&'a [QuadTree<PU, Item, CAPACITY>]>,
+    quadrants: Option<&'a [QuadTree<PU, Item, Cap>]>,
     items: &'a [(Point<PU>, Item)],
-    current_sub_query: Option<Box<Iter<'a, PU, Item, CAPACITY>>>,
+    current_sub_query: Option<Box<Iter<'a, PU, Item, Cap>>>,
 }
 
-impl<'a, PU, Item, const CAPACITY: usize> Iter<'a, PU, Item, CAPACITY>
+impl<'a, PU, Item, Cap> Iter<'a, PU, Item, Cap>
 where
+    Cap: Capacity,
     PU: PositionUnit,
 {
-    pub(super) fn new(tree: &'a QuadTree<PU, Item, CAPACITY>) -> Self {
+    pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>) -> Self {
         Self {
             items: tree.items.as_slice(),
             quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
@@ -93,7 +98,7 @@ where
         }
     }
 
-    fn find_next_quadrant(&mut self) -> Option<Box<Iter<'a, PU, Item, CAPACITY>>> {
+    fn find_next_quadrant(&mut self) -> Option<Box<Iter<'a, PU, Item, Cap>>> {
         let quadrants = self.quadrants.as_mut()?;
         if quadrants.is_empty() {
             return None;
@@ -107,8 +112,9 @@ where
     }
 }
 
-impl<'a, PU, Item, const CAPACITY: usize> Iterator for Iter<'a, PU, Item, CAPACITY>
+impl<'a, PU, Item, Cap> Iterator for Iter<'a, PU, Item, Cap>
 where
+    Cap: Capacity,
     PU: PositionUnit,
 {
     type Item = &'a Item;
