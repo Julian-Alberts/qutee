@@ -64,6 +64,7 @@ impl<T> Point<T>
 where
     T: PositionUnit,
 {
+    /// Create a new point
     pub fn new(x: T, y: T) -> Self {
         Self { x, y }
     }
