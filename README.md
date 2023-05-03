@@ -10,8 +10,7 @@ Values do not require any special traits to be used.
 ```rust
 use qutee::*;
 // Create a new quadtree where the area's top left corner is at -10, -10, with a width and height of 20.
-type QuadTree<Cord, Item> = qutee::QuadTree<Cord, Item, RunTimeCap>;
-let mut tree = QuadTree::new(Boundary::new((-10., -10.), 20., 20.), 5);
+let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((-10., -10.), 20., 20.), 5);
 assert!(tree.insert_at((0.5, 0.1), "A").is_ok());
 assert!(tree.insert_at((-1., 1.), "B").is_ok());
 // This point is outside the tree

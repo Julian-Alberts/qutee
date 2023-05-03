@@ -2,14 +2,17 @@
 //! qutee is a small create which implements a quad tree.
 //! ```
 //! use qutee::*;
-//! type QuadTree<Cord, Item> = qutee::QuadTree<Cord, Item, RuntimeCap>;
-//! let mut tree = QuadTree::new(Boundary::new((-10., -10.), 20., 20.), 5);
+//! // Create a new quadtree where the area's top left corner is at -10, -10, with a width and height of 20.
+//! let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((-10., -10.), 20., 20.), 5);
 //! assert!(tree.insert_at((0.5, 0.1), "A").is_ok());
 //! assert!(tree.insert_at((-1., 1.), "B").is_ok());
+//! // This point is outside the tree
 //! assert_eq!(tree.insert_at((10.1, 5.), "C"), Err(QuadTreeError::OutOfBounds));
+//! // Search elements inside a boundary. A boundary can also be defined as an area between two points.
 //! let mut query = tree.query(Boundary::between_points((0.,0.),(1.,1.)));
 //! assert_eq!(query.next(), Some(&"A"));
 //! assert!(query.next().is_none());
+//! // Get an iterator over all items
 //! let mut iter = tree.iter();
 //! assert_eq!(iter.next(), Some(&"A"));
 //! assert_eq!(iter.next(), Some(&"B"));
@@ -24,7 +27,7 @@ use std::fmt::Debug;
 
 pub use boundary::*;
 use bounds::Capacity;
-pub use bounds::{CompiletimeCap, RuntimeCap};
+pub use bounds::{ConstCap, DynCap};
 pub use iter::*;
 
 ///
@@ -33,7 +36,7 @@ pub use iter::*;
 /// Item: The type to be saved
 /// CAP: The maximum capacity of each level
 #[derive(PartialEq, Debug)]
-pub struct QuadTree<C, Item, Cap = RuntimeCap>
+pub struct QuadTree<C, Item, Cap = DynCap>
 where
     C: Coordinate,
 {
@@ -127,29 +130,23 @@ where
     }
 }
 
-impl<C, Item> QuadTree<C, Item, RuntimeCap>
+impl<C, Item> QuadTree<C, Item, DynCap>
 where
     C: Coordinate,
 {
     /// Create a new QuadTree
-    pub fn new(boundary: Boundary<C>, cap: usize) -> Self {
-        let capacity = RuntimeCap(cap);
-        Self {
-            boundary,
-            quadrants: None,
-            items: Vec::with_capacity(capacity.capacity()),
-            capacity,
-        }
+    pub fn new_with_runtime_cap(boundary: Boundary<C>, cap: usize) -> Self {
+        Self::new_with_capacity(boundary, DynCap(cap))
     }
 }
 
-impl<C, Item, const CAP: usize> QuadTree<C, Item, CompiletimeCap<CAP>>
+impl<C, Item, const CAP: usize> QuadTree<C, Item, ConstCap<CAP>>
 where
     C: Coordinate,
 {
     /// Create a new QuadTree with a constant capacity
     pub fn new_with_const_cap(boundary: Boundary<C>) -> Self {
-        let capacity = CompiletimeCap;
+        let capacity = ConstCap;
         Self::new_with_capacity(boundary, capacity)
     }
 }
@@ -165,18 +162,18 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{bounds::CompiletimeCap, Boundary, Point, Coordinate, QuadTree, QuadTreeError};
+    use crate::{bounds::ConstCap, Boundary, Point, Coordinate, QuadTree, QuadTreeError};
 
     #[test]
     fn create_quad_tree() {
         let boundary = Boundary::new((0, 0), 10, 10);
-        let tree = QuadTree::<usize, u8, CompiletimeCap<20>>::new_with_const_cap(boundary.clone());
+        let tree = QuadTree::<usize, u8, ConstCap<20>>::new_with_const_cap(boundary.clone());
         assert_eq!(
             QuadTree {
                 boundary,
                 quadrants: None,
                 items: Vec::new(),
-                capacity: CompiletimeCap
+                capacity: ConstCap,
             },
             tree
         );
@@ -185,14 +182,14 @@ mod tests {
 
     #[test]
     fn insert_single() {
-        let mut tree = QuadTree::new(Boundary::new((0, 0), 10, 10), 10);
+        let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((0, 0), 10, 10), 10);
         assert!(tree.insert_at((10, 10), 1u8).is_ok());
         assert_eq!(tree.items[0], ((10, 10).into(), 1));
     }
 
     #[test]
     fn insert_out_of_bounds() {
-        let mut tree = QuadTree::new(Boundary::new((0, 0), 10, 10), 10);
+        let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((0, 0), 10, 10), 10);
         assert_eq!(
             tree.insert_at((20, 20), 1u8),
             Err(QuadTreeError::OutOfBounds)
@@ -201,7 +198,7 @@ mod tests {
 
     #[test]
     fn insert_more_than_capacity() {
-        let mut tree = QuadTree::new(Boundary::new((0, 0), 10, 10), 1);
+        let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((0, 0), 10, 10), 1);
         assert!(tree.quadrants.is_none());
 
         assert!(tree.insert_at((1, 1), 1).is_ok());
@@ -228,7 +225,7 @@ mod tests {
 
     #[test]
     fn query() {
-        let mut tree = QuadTree::new(Boundary::new((-10, -10), 20, 20), 2);
+        let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((-10, -10), 20, 20), 2);
         let mut expected = Vec::new();
         for i in 1..10 {
             assert!(tree.insert_at((i, i), i).is_ok());
@@ -251,7 +248,7 @@ mod tests {
 
     #[test]
     fn iter() {
-        let mut tree = QuadTree::new(Boundary::new((-10, -10), 20, 20), 2);
+        let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((-10, -10), 20, 20), 2);
         let mut expected = Vec::new();
         for i in 1..10 {
             assert!(tree.insert_at((i, i), i).is_ok());
