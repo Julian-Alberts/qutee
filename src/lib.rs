@@ -29,17 +29,17 @@ pub use iter::*;
 
 ///
 /// # Parameter
-/// PU: The type used for coordinates
+/// C: The type used for coordinates
 /// Item: The type to be saved
-/// CAPACITY: The maximum capacity of each level
+/// CAP: The maximum capacity of each level
 #[derive(PartialEq, Debug)]
-pub struct QuadTree<PU, Item, Cap>
+pub struct QuadTree<C, Item, Cap = RuntimeCap>
 where
-    PU: PositionUnit,
+    C: Coordinate,
 {
-    boundary: Boundary<PU>,
-    quadrants: Option<Box<[QuadTree<PU, Item, Cap>; 4]>>,
-    items: Vec<(Point<PU>, Item)>,
+    boundary: Boundary<C>,
+    quadrants: Option<Box<[QuadTree<C, Item, Cap>; 4]>>,
+    items: Vec<(Point<C>, Item)>,
     capacity: Cap,
 }
 
@@ -52,17 +52,17 @@ pub enum QuadTreeError {
 
 /// A point in two dimensional space
 #[derive(Debug, PartialEq, Clone)]
-pub struct Point<T>
+pub struct Point<C>
 where
-    T: PositionUnit,
+    C: Coordinate,
 {
-    x: T,
-    y: T,
+    x: C,
+    y: C,
 }
 
 impl<T> Point<T>
 where
-    T: PositionUnit,
+    T: Coordinate,
 {
     /// Create a new point
     pub fn new(x: T, y: T) -> Self {
@@ -70,13 +70,13 @@ where
     }
 }
 
-impl<PU, Item, Cap> QuadTree<PU, Item, Cap>
+impl<C, Item, Cap> QuadTree<C, Item, Cap>
 where
     Cap: Capacity,
-    PU: PositionUnit,
+    C: Coordinate,
 {
     /// Create a new quad tree for a given area where each level of the tree has a given capacity.
-    pub fn new_with_capacity(boundary: Boundary<PU>, capacity: Cap) -> Self {
+    pub fn new_with_capacity(boundary: Boundary<C>, capacity: Cap) -> Self {
         Self {
             boundary,
             quadrants: None,
@@ -88,7 +88,7 @@ where
     /// Insert new item into the quad tree.
     pub fn insert_at(
         &mut self,
-        point: impl Into<Point<PU>>,
+        point: impl Into<Point<C>>,
         value: Item,
     ) -> Result<(), QuadTreeError> {
         let point = point.into();
@@ -117,22 +117,22 @@ where
     }
 
     /// Get all items in a given area.
-    pub fn query(&self, boundary: Boundary<PU>) -> Query<'_, PU, Item, Cap> {
+    pub fn query(&self, boundary: Boundary<C>) -> Query<'_, C, Item, Cap> {
         Query::new(self, boundary)
     }
 
     /// Get an iterator over all items.
-    pub fn iter(&self) -> Iter<'_, PU, Item, Cap> {
+    pub fn iter(&self) -> Iter<'_, C, Item, Cap> {
         Iter::new(self)
     }
 }
 
-impl<PU, Item> QuadTree<PU, Item, RuntimeCap>
+impl<C, Item> QuadTree<C, Item, RuntimeCap>
 where
-    PU: PositionUnit,
+    C: Coordinate,
 {
     /// Create a new QuadTree
-    pub fn new(boundary: Boundary<PU>, cap: usize) -> Self {
+    pub fn new(boundary: Boundary<C>, cap: usize) -> Self {
         let capacity = RuntimeCap(cap);
         Self {
             boundary,
@@ -143,29 +143,29 @@ where
     }
 }
 
-impl<PU, Item, const CAP: usize> QuadTree<PU, Item, CompiletimeCap<CAP>>
+impl<C, Item, const CAP: usize> QuadTree<C, Item, CompiletimeCap<CAP>>
 where
-    PU: PositionUnit,
+    C: Coordinate,
 {
     /// Create a new QuadTree with a constant capacity
-    pub fn new_with_const_cap(boundary: Boundary<PU>) -> Self {
+    pub fn new_with_const_cap(boundary: Boundary<C>) -> Self {
         let capacity = CompiletimeCap;
         Self::new_with_capacity(boundary, capacity)
     }
 }
 
-impl<Pu> From<(Pu, Pu)> for Point<Pu>
+impl<C> From<(C, C)> for Point<C>
 where
-    Pu: PositionUnit,
+    C: Coordinate,
 {
-    fn from((x, y): (Pu, Pu)) -> Self {
+    fn from((x, y): (C, C)) -> Self {
         Point { x, y }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{bounds::CompiletimeCap, Boundary, Point, PositionUnit, QuadTree, QuadTreeError};
+    use crate::{bounds::CompiletimeCap, Boundary, Point, Coordinate, QuadTree, QuadTreeError};
 
     #[test]
     fn create_quad_tree() {
@@ -274,7 +274,7 @@ mod tests {
     #[test_case::test_case(10., 10. => Point {x: 10., y: 10.}; "float")]
     fn tuple_to_point<Pu>(x: Pu, y: Pu) -> Point<Pu>
     where
-        Pu: PositionUnit,
+        Pu: Coordinate,
     {
         (x, y).into()
     }

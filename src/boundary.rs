@@ -4,33 +4,33 @@ use crate::Point;
 
 /// A Area
 #[derive(Debug, Clone, PartialEq)]
-pub struct Boundary<T = usize>
+pub struct Boundary<C = usize>
 where
-    T: PositionUnit,
+    C: Coordinate,
 {
-    p1: Point<T>,
-    p2: Point<T>,
+    p1: Point<C>,
+    p2: Point<C>,
 }
 
 /// This trait is required for coordinates
-pub trait PositionUnit:
+pub trait Coordinate:
     num_traits::NumOps + Sized + Clone + Copy + num_traits::NumCast + PartialOrd + Debug
 {
 }
 
-impl<T> Boundary<T>
+impl<C> Boundary<C>
 where
-    T: PositionUnit,
+    C: Coordinate,
 {
     /// create a new Boundary from x,y with width and height
-    pub fn new(point: impl Into<Point<T>>, width: T, height: T) -> Self {
+    pub fn new(point: impl Into<Point<C>>, width: C, height: C) -> Self {
         let p1 = point.into();
         let p2 = (p1.x + width, p1.y + height).into();
         Self { p1, p2 }
     }
 
     /// Create a new Area between two points
-    pub fn between_points(p1: impl Into<Point<T>>, p2: impl Into<Point<T>>) -> Self {
+    pub fn between_points(p1: impl Into<Point<C>>, p2: impl Into<Point<C>>) -> Self {
         let mut p1: Point<_> = p1.into();
         let mut p2: Point<_> = p2.into();
 
@@ -44,10 +44,10 @@ where
         Self { p1, p2 }
     }
 
-    pub(crate) fn split(&self) -> [Boundary<T>; 4] {
+    pub(crate) fn split(&self) -> [Boundary<C>; 4] {
         let dx = self.p2.x - self.p1.x;
         let dy = self.p2.y - self.p1.y;
-        let two = T::from(2).expect("Could not convert 2 to required type");
+        let two = C::from(2).expect("Could not convert 2 to required type");
         let half_dx = dx / two;
         let half_dy = dy / two;
         [
@@ -58,29 +58,29 @@ where
         ]
     }
 
-    pub(crate) fn contains(&self, point: &Point<T>) -> bool {
+    pub(crate) fn contains(&self, point: &Point<C>) -> bool {
         !(point.x < self.p1.x || point.x > self.p2.x || point.y < self.p1.y || point.y > self.p2.y)
     }
 
-    pub(crate) fn overlaps(&self, Boundary { p1, p2 }: &Boundary<T>) -> bool {
+    pub(crate) fn overlaps(&self, Boundary { p1, p2 }: &Boundary<C>) -> bool {
         !(p2.x < self.p1.x || p1.x > self.p2.x || p2.y < self.p1.y || p1.y > self.p2.y)
     }
 }
 
-impl PositionUnit for usize {}
-impl PositionUnit for isize {}
-impl PositionUnit for u8 {}
-impl PositionUnit for u16 {}
-impl PositionUnit for u32 {}
-impl PositionUnit for u64 {}
-impl PositionUnit for u128 {}
-impl PositionUnit for i8 {}
-impl PositionUnit for i16 {}
-impl PositionUnit for i32 {}
-impl PositionUnit for i64 {}
-impl PositionUnit for i128 {}
-impl PositionUnit for f32 {}
-impl PositionUnit for f64 {}
+impl Coordinate for usize {}
+impl Coordinate for isize {}
+impl Coordinate for u8 {}
+impl Coordinate for u16 {}
+impl Coordinate for u32 {}
+impl Coordinate for u64 {}
+impl Coordinate for u128 {}
+impl Coordinate for i8 {}
+impl Coordinate for i16 {}
+impl Coordinate for i32 {}
+impl Coordinate for i64 {}
+impl Coordinate for i128 {}
+impl Coordinate for f32 {}
+impl Coordinate for f64 {}
 
 #[cfg(test)]
 mod tests {

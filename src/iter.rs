@@ -1,10 +1,10 @@
-use crate::{bounds::Capacity, Boundary, Point, PositionUnit, QuadTree};
+use crate::{bounds::Capacity, Boundary, Point, Coordinate, QuadTree};
 
 /// Query Iterator
 pub struct Query<'a, PU, Item, Cap>
 where
     Cap: Capacity,
-    PU: PositionUnit,
+    PU: Coordinate,
 {
     quadrants: Option<&'a [QuadTree<PU, Item, Cap>]>,
     items: &'a [(Point<PU>, Item)],
@@ -15,7 +15,7 @@ where
 impl<'a, PU, Item, Cap> Query<'a, PU, Item, Cap>
 where
     Cap: Capacity,
-    PU: PositionUnit,
+    PU: Coordinate,
 {
     pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>, boundary: Boundary<PU>) -> Self {
         Self {
@@ -45,7 +45,7 @@ where
 impl<'a, PU, Item, Cap> Iterator for Query<'a, PU, Item, Cap>
 where
     Cap: Capacity,
-    PU: PositionUnit,
+    PU: Coordinate,
 {
     type Item = &'a Item;
 
@@ -78,7 +78,7 @@ where
 pub struct Iter<'a, PU, Item, Cap>
 where
     Cap: Capacity,
-    PU: PositionUnit,
+    PU: Coordinate,
 {
     quadrants: Option<&'a [QuadTree<PU, Item, Cap>]>,
     items: &'a [(Point<PU>, Item)],
@@ -88,7 +88,7 @@ where
 impl<'a, PU, Item, Cap> Iter<'a, PU, Item, Cap>
 where
     Cap: Capacity,
-    PU: PositionUnit,
+    PU: Coordinate,
 {
     pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>) -> Self {
         Self {
@@ -112,7 +112,7 @@ where
 impl<'a, PU, Item, Cap> Iterator for Iter<'a, PU, Item, Cap>
 where
     Cap: Capacity,
-    PU: PositionUnit,
+    PU: Coordinate,
 {
     type Item = &'a Item;
 
