@@ -20,7 +20,7 @@ mod boundary;
 mod bounds;
 mod iter;
 
-use std::{fmt::Debug, ops::Deref};
+use std::fmt::Debug;
 
 pub use boundary::*;
 use bounds::Capacity;
@@ -42,14 +42,6 @@ where
     items: Vec<(Point<PU>, Item)>,
     capacity: Cap,
 }
-
-pub struct CTQuadTree<Pu, Item, const CAP: usize>(crate::QuadTree<Pu, Item, CompiletimeCap<CAP>>)
-    where Pu: PositionUnit
-;
-
-pub struct RTQuadTree<Pu, Item>(QuadTree<Pu, Item, RuntimeCap>)
-    where Pu: PositionUnit
-;
 
 /// Possible errors
 #[derive(Debug, PartialEq)]
@@ -159,48 +151,6 @@ where
     pub fn new_with_const_cap(boundary: Boundary<PU>) -> Self {
         let capacity = CompiletimeCap;
         Self::new_with_capacity(boundary, capacity)
-    }
-}
-
-/// Wrapper a QuadTree using compile time capacity.
-impl <Pu, Item, const CAP: usize> CTQuadTree<Pu, Item, CAP>
-    where Pu: PositionUnit
-{
-
-    pub fn new(boundary: Boundary<Pu>) -> Self {
-        Self(QuadTree::new_with_const_cap(boundary))
-    }
-
-}
-
-impl <Pu, Item, const CAP: usize> Deref for CTQuadTree<Pu, Item, CAP>
-        where Pu: PositionUnit
-{
-    type Target = crate::QuadTree<Pu, Item, CompiletimeCap<CAP>>;
-
-    fn deref(&self) -> &crate::QuadTree<Pu, Item, CompiletimeCap<CAP>> {
-        &self.0
-    }
-}
-
-/// Wrapper a QuadTree using compile time capacity.
-impl <Pu, Item> RTQuadTree<Pu, Item>
-    where Pu: PositionUnit
-{
-
-    pub fn new(boundary: Boundary<Pu>, cap: usize) -> Self {
-        Self(QuadTree::new(boundary, cap))
-    }
-
-}
-
-impl <Pu, Item> Deref for RTQuadTree<Pu, Item>
-        where Pu: PositionUnit
-{
-    type Target = crate::QuadTree<Pu, Item, RuntimeCap>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }
 
