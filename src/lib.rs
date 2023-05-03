@@ -2,7 +2,7 @@
 //! qutee is a small create which implements a quad tree.
 //! ```
 //! use qutee::*;
-//! type QuadTree<Cord, Item> = qutee::QuadTree<Cord, Item, RunTimeCap>;
+//! type QuadTree<Cord, Item> = qutee::QuadTree<Cord, Item, RuntimeCap>;
 //! let mut tree = QuadTree::new(Boundary::new((-10., -10.), 20., 20.), 5);
 //! assert!(tree.insert_at((0.5, 0.1), "A").is_ok());
 //! assert!(tree.insert_at((-1., 1.), "B").is_ok());
@@ -20,11 +20,11 @@ mod boundary;
 mod bounds;
 mod iter;
 
-use std::fmt::Debug;
+use std::{fmt::Debug, ops::Deref};
 
 pub use boundary::*;
 use bounds::Capacity;
-pub use bounds::{CompileTimeCap, RunTimeCap};
+pub use bounds::{CompiletimeCap, RuntimeCap};
 pub use iter::*;
 
 ///
@@ -33,7 +33,7 @@ pub use iter::*;
 /// Item: The type to be saved
 /// CAPACITY: The maximum capacity of each level
 #[derive(PartialEq, Debug)]
-pub struct QuadTree<PU, Item, Cap = RunTimeCap>
+pub struct QuadTree<PU, Item, Cap>
 where
     PU: PositionUnit,
 {
@@ -42,6 +42,14 @@ where
     items: Vec<(Point<PU>, Item)>,
     capacity: Cap,
 }
+
+pub struct CTQuadTree<Pu, Item, const CAP: usize>(crate::QuadTree<Pu, Item, CompiletimeCap<CAP>>)
+    where Pu: PositionUnit
+;
+
+pub struct RTQuadTree<Pu, Item>(QuadTree<Pu, Item, RuntimeCap>)
+    where Pu: PositionUnit
+;
 
 /// Possible errors
 #[derive(Debug, PartialEq)]
@@ -127,13 +135,13 @@ where
     }
 }
 
-impl<PU, Item> QuadTree<PU, Item, RunTimeCap>
+impl<PU, Item> QuadTree<PU, Item, RuntimeCap>
 where
     PU: PositionUnit,
 {
     /// Create a new QuadTree
     pub fn new(boundary: Boundary<PU>, cap: usize) -> Self {
-        let capacity = RunTimeCap(cap);
+        let capacity = RuntimeCap(cap);
         Self {
             boundary,
             quadrants: None,
@@ -143,14 +151,56 @@ where
     }
 }
 
-impl<PU, Item, const CAP: usize> QuadTree<PU, Item, CompileTimeCap<CAP>>
+impl<PU, Item, const CAP: usize> QuadTree<PU, Item, CompiletimeCap<CAP>>
 where
     PU: PositionUnit,
 {
     /// Create a new QuadTree with a constant capacity
     pub fn new_with_const_cap(boundary: Boundary<PU>) -> Self {
-        let capacity = CompileTimeCap;
+        let capacity = CompiletimeCap;
         Self::new_with_capacity(boundary, capacity)
+    }
+}
+
+/// Wrapper a QuadTree using compile time capacity.
+impl <Pu, Item, const CAP: usize> CTQuadTree<Pu, Item, CAP>
+    where Pu: PositionUnit
+{
+
+    pub fn new(boundary: Boundary<Pu>) -> Self {
+        Self(QuadTree::new_with_const_cap(boundary))
+    }
+
+}
+
+impl <Pu, Item, const CAP: usize> Deref for CTQuadTree<Pu, Item, CAP>
+        where Pu: PositionUnit
+{
+    type Target = crate::QuadTree<Pu, Item, CompiletimeCap<CAP>>;
+
+    fn deref(&self) -> &crate::QuadTree<Pu, Item, CompiletimeCap<CAP>> {
+        &self.0
+    }
+}
+
+/// Wrapper a QuadTree using compile time capacity.
+impl <Pu, Item> RTQuadTree<Pu, Item>
+    where Pu: PositionUnit
+{
+
+    pub fn new(boundary: Boundary<Pu>, cap: usize) -> Self {
+        Self(QuadTree::new(boundary, cap))
+    }
+
+}
+
+impl <Pu, Item> Deref for RTQuadTree<Pu, Item>
+        where Pu: PositionUnit
+{
+    type Target = crate::QuadTree<Pu, Item, RuntimeCap>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -165,18 +215,18 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{bounds::CompileTimeCap, Boundary, Point, PositionUnit, QuadTree, QuadTreeError};
+    use crate::{bounds::CompiletimeCap, Boundary, Point, PositionUnit, QuadTree, QuadTreeError};
 
     #[test]
     fn create_quad_tree() {
         let boundary = Boundary::new((0, 0), 10, 10);
-        let tree = QuadTree::<usize, u8, CompileTimeCap<20>>::new_with_const_cap(boundary.clone());
+        let tree = QuadTree::<usize, u8, CompiletimeCap<20>>::new_with_const_cap(boundary.clone());
         assert_eq!(
             QuadTree {
                 boundary,
                 quadrants: None,
                 items: Vec::new(),
-                capacity: CompileTimeCap
+                capacity: CompiletimeCap
             },
             tree
         );

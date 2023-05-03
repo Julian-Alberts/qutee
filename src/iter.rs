@@ -103,12 +103,9 @@ where
         if quadrants.is_empty() {
             return None;
         }
-        if !quadrants.is_empty() {
-            let q = &quadrants[0];
-            *quadrants = &quadrants[1..];
-            return Some(Box::new(q.iter()));
-        }
-        None
+        let q = &quadrants[0];
+        *quadrants = &quadrants[1..];
+        return Some(Box::new(q.iter()));
     }
 }
 
