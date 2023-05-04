@@ -316,4 +316,16 @@ mod tests {
     {
         (x, y).into()
     }
+
+    #[test]
+    fn format_debug_error() {
+        let e = super::QuadTreeError::OutOfBounds(Boundary::between_points((1,2), (2,3)), (10,20).into());
+        assert_eq!("point (10,20) is outside of area (1,2),(2,3)", format!("{:#?}", e));
+    }
+
+    #[test]
+    fn format_display_error() {
+        let e = super::QuadTreeError::OutOfBounds(Boundary::between_points((1,2), (2,3)), (10,20).into());
+        assert_eq!("point (10,20) is outside of area (1,2),(2,3)", format!("{}", e));
+    }
 }
