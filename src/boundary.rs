@@ -4,7 +4,7 @@ use crate::Point;
 
 /// A Area
 #[derive(Debug, Clone, PartialEq)]
-pub struct Boundary<C = usize>
+pub struct Boundary<C>
 where
     C: Coordinate,
 {
@@ -12,12 +12,13 @@ where
     p2: Point<C>,
 }
 
-impl Display for Boundary {
-
+impl<C> Display for Boundary<C>
+where
+    C: Coordinate,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{},{}", self.p1, self.p2)
     }
-
 }
 
 /// This trait is required for coordinates
@@ -99,7 +100,7 @@ mod tests {
     #[test_case(2,1,1,2 => Boundary::new((1,1),1,1); "Swap x")]
     #[test_case(1,2,2,1 => Boundary::new((1,1),1,1); "Swap y")]
     #[test_case(2,2,1,1 => Boundary::new((1,1),1,1); "Swap both")]
-    fn boundary_between_points(x1: usize, y1: usize, x2: usize, y2: usize) -> Boundary {
+    fn boundary_between_points(x1: usize, y1: usize, x2: usize, y2: usize) -> Boundary<usize> {
         Boundary::between_points((x1, y1), (x2, y2))
     }
 
@@ -147,13 +148,13 @@ mod tests {
 
     #[test]
     fn format_point() {
-        let p = Point::new(12,34);
+        let p = Point::new(12, 34);
         assert_eq!("(12,34)", format!("{p}"))
     }
 
     #[test]
     fn format_boundary() {
-        let b = Boundary::between_points((12,34), (23,45));
+        let b = Boundary::between_points((12, 34), (23, 45));
         assert_eq!("(12,34),(23,45)", format!("{b}"))
     }
 }

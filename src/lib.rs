@@ -23,13 +23,15 @@ mod boundary;
 mod bounds;
 mod iter;
 
-use std::fmt::{Debug, Display};
+use std::{
+    error::Error,
+    fmt::{Debug, Display},
+};
 
 pub use boundary::*;
 use bounds::Capacity;
 pub use bounds::{ConstCap, DynCap};
 pub use iter::*;
-use thiserror::Error;
 
 ///
 /// # Parameter
@@ -48,12 +50,12 @@ where
 }
 
 /// Possible errors
-#[derive(Debug, PartialEq, Error)]
+#[derive(PartialEq)]
 pub enum QuadTreeError<C>
-    where C: Coordinate
+where
+    C: Coordinate,
 {
     /// Point is out of bounds
-    #[error("Point {0} is outside of area {1}")]
     OutOfBounds(Boundary<C>, Point<C>),
 }
 
@@ -103,8 +105,7 @@ where
             return Err(QuadTreeError::OutOfBounds(self.boundary.clone(), point));
         }
         if self.quadrants.is_none() && self.items.len() >= self.capacity.capacity() {
-            let [b0,b1,b2,b3] = self.boundary
-                .split();
+            let [b0, b1, b2, b3] = self.boundary.split();
             self.quadrants = Some(Box::new([
                 QuadTree::new_with_capacity(b0, self.capacity),
                 QuadTree::new_with_capacity(b1, self.capacity),
@@ -113,7 +114,10 @@ where
             ]));
         }
         if let Some(quads) = &mut self.quadrants {
-            let sub_tree = quads.iter_mut().find(|tree| tree.boundary.contains(&point)).expect("Tree did not split correctly");
+            let sub_tree = quads
+                .iter_mut()
+                .find(|tree| tree.boundary.contains(&point))
+                .expect("Tree did not split correctly");
             return sub_tree.insert_at(point, value);
         }
         self.items.push((point, value));
@@ -161,18 +165,42 @@ where
     }
 }
 
-impl <C> Display for Point<C>
+impl<C> Display for Point<C>
 where
-    C: Coordinate
+    C: Coordinate,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "({:?},{:?})", self.x, self.y)
     }
 }
 
+impl<C> Error for QuadTreeError<C> where C: Coordinate {}
+
+impl<C> Display for QuadTreeError<C>
+where
+    C: Coordinate,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        <Self as Debug>::fmt(self, f)
+    }
+}
+
+impl<C> Debug for QuadTreeError<C>
+where
+    C: Coordinate,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::OutOfBounds(boundary, point) => {
+                write!(f, "point {point} is outside of area {boundary}")
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{bounds::ConstCap, Boundary, Point, Coordinate, QuadTree, QuadTreeError};
+    use crate::{bounds::ConstCap, Boundary, Coordinate, Point, QuadTree, QuadTreeError};
 
     #[test]
     fn create_quad_tree() {
@@ -202,7 +230,10 @@ mod tests {
         let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((0, 0), 10, 10), 10);
         assert_eq!(
             tree.insert_at((20, 20), 1u8),
-            Err(QuadTreeError::OutOfBounds(Boundary::new((0,0), 10, 10), (20, 20).into()))
+            Err(QuadTreeError::OutOfBounds(
+                Boundary::new((0, 0), 10, 10),
+                (20, 20).into()
+            ))
         );
     }
 

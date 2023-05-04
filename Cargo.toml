@@ -10,7 +10,6 @@ description = "A small qute implementation of a quadtree"
 
 [dependencies]
 num-traits = "0.2.15"
-thiserror = "1.0.40"
 
 [dev-dependencies]
 test-case = "3.0.0"

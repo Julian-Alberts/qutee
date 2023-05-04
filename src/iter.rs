@@ -1,4 +1,4 @@
-use crate::{bounds::Capacity, Boundary, Point, Coordinate, QuadTree};
+use crate::{bounds::Capacity, Boundary, Coordinate, Point, QuadTree};
 
 /// Query Iterator
 pub struct Query<'a, PU, Item, Cap>
