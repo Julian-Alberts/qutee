@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 use crate::Point;
 
@@ -10,6 +10,14 @@ where
 {
     p1: Point<C>,
     p2: Point<C>,
+}
+
+impl Display for Boundary {
+
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{},{}", self.p1, self.p2)
+    }
+
 }
 
 /// This trait is required for coordinates
@@ -135,5 +143,17 @@ mod tests {
         let a = Boundary::new((1, 1), 4, 4);
         let b = Boundary::new((x, y), width, height);
         a.overlaps(&b)
+    }
+
+    #[test]
+    fn format_point() {
+        let p = Point::new(12,34);
+        assert_eq!("(12,34)", format!("{p}"))
+    }
+
+    #[test]
+    fn format_boundary() {
+        let b = Boundary::between_points((12,34), (23,45));
+        assert_eq!("(12,34),(23,45)", format!("{b}"))
     }
 }

@@ -7,7 +7,7 @@
 //! assert!(tree.insert_at((0.5, 0.1), "A").is_ok());
 //! assert!(tree.insert_at((-1., 1.), "B").is_ok());
 //! // This point is outside the tree
-//! assert_eq!(tree.insert_at((10.1, 5.), "C"), Err(QuadTreeError::OutOfBounds));
+//! assert!(tree.insert_at((10.1, 5.), "C").is_err());
 //! // Search elements inside a boundary. A boundary can also be defined as an area between two points.
 //! let mut query = tree.query(Boundary::between_points((0.,0.),(1.,1.)));
 //! assert_eq!(query.next(), Some(&"A"));
@@ -23,12 +23,13 @@ mod boundary;
 mod bounds;
 mod iter;
 
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 pub use boundary::*;
 use bounds::Capacity;
 pub use bounds::{ConstCap, DynCap};
 pub use iter::*;
+use thiserror::Error;
 
 ///
 /// # Parameter
@@ -47,10 +48,13 @@ where
 }
 
 /// Possible errors
-#[derive(Debug, PartialEq)]
-pub enum QuadTreeError {
+#[derive(Debug, PartialEq, Error)]
+pub enum QuadTreeError<C>
+    where C: Coordinate
+{
     /// Point is out of bounds
-    OutOfBounds,
+    #[error("Point {0} is outside of area {1}")]
+    OutOfBounds(Boundary<C>, Point<C>),
 }
 
 /// A point in two dimensional space
@@ -93,26 +97,23 @@ where
         &mut self,
         point: impl Into<Point<C>>,
         value: Item,
-    ) -> Result<(), QuadTreeError> {
+    ) -> Result<(), QuadTreeError<C>> {
         let point = point.into();
         if !self.boundary.contains(&point) {
-            return Err(QuadTreeError::OutOfBounds);
+            return Err(QuadTreeError::OutOfBounds(self.boundary.clone(), point));
         }
         if self.quadrants.is_none() && self.items.len() >= self.capacity.capacity() {
-            let Ok(quadrants) = self.boundary
-                .split()
-                .into_iter()
-                .map(|b| QuadTree::new_with_capacity(b, self.capacity))
-                .collect::<Vec<_>>()
-                .try_into() else {
-                    unreachable!("Boundary did not split into 4")
-                };
-            self.quadrants = Some(quadrants);
+            let [b0,b1,b2,b3] = self.boundary
+                .split();
+            self.quadrants = Some(Box::new([
+                QuadTree::new_with_capacity(b0, self.capacity),
+                QuadTree::new_with_capacity(b1, self.capacity),
+                QuadTree::new_with_capacity(b2, self.capacity),
+                QuadTree::new_with_capacity(b3, self.capacity),
+            ]));
         }
         if let Some(quads) = &mut self.quadrants {
-            let Some(sub_tree) = quads.iter_mut().find(|tree| tree.boundary.contains(&point)) else {
-                return Err(QuadTreeError::OutOfBounds)
-            };
+            let sub_tree = quads.iter_mut().find(|tree| tree.boundary.contains(&point)).expect("Tree did not split correctly");
             return sub_tree.insert_at(point, value);
         }
         self.items.push((point, value));
@@ -160,6 +161,15 @@ where
     }
 }
 
+impl <C> Display for Point<C>
+where
+    C: Coordinate
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({:?},{:?})", self.x, self.y)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{bounds::ConstCap, Boundary, Point, Coordinate, QuadTree, QuadTreeError};
@@ -192,7 +202,7 @@ mod tests {
         let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((0, 0), 10, 10), 10);
         assert_eq!(
             tree.insert_at((20, 20), 1u8),
-            Err(QuadTreeError::OutOfBounds)
+            Err(QuadTreeError::OutOfBounds(Boundary::new((0,0), 10, 10), (20, 20).into()))
         );
     }
 
