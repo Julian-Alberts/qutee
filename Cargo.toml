@@ -9,7 +9,7 @@ description = "A small qute implementation of a quadtree"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-num-traits = "0.2.15"
+num-traits = "0.2"
 
 [dev-dependencies]
-test-case = "3.0.0"
+test-case = "3.0"
