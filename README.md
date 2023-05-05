@@ -27,7 +27,8 @@ To create a `QuadTree` you can use one of three methods
 3. new_with_dyn_cap takes a `Boundary`. This function is only available if the capacity is known at compile time.
 
 ### Insert
-A item can be inserted using the `insert_at` function. The first parameter is the point and the second the item.
+A item can be inserted using the `insert` function. This function requires for item to implement `AsPoint`.
+If your item does not implement `AsPoint` you can use `insert_at`. The first parameter is the point and the second the item.
 
 ### Query
 `query` takes a `Boundary` and returns an Iterator of type `Query`

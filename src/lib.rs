@@ -59,6 +59,14 @@ where
     OutOfBounds(Boundary<C>, Point<C>),
 }
 
+/// This traits allowes a type to be used with `qutee::QuadTree::insert`
+pub trait AsPoint<C>
+    where C: Coordinate
+{
+    /// Get the position of an item
+    fn as_point(&self) -> Point<C>;
+}
+
 /// A point in two dimensional space
 #[derive(Debug, PartialEq, Clone)]
 pub struct Point<C>
@@ -133,6 +141,38 @@ where
     pub fn iter(&self) -> Iter<'_, C, Item, Cap> {
         Iter::new(self)
     }
+}
+
+
+impl<C, Item, Cap> QuadTree<C, Item, Cap>
+where
+    Cap: Capacity,
+    C: Coordinate,
+    Item: AsPoint<C>
+{
+
+    /// Insert a new item
+    /// ```
+    /// use qutee::*;
+    /// struct Item {
+    ///     x: usize,
+    ///     y: usize,
+    /// }
+    /// impl AsPoint<usize> for Item {
+    ///     fn as_point(&self) -> Point<usize> {
+    ///         (self.x, self.y).into()
+    ///     }
+    /// }
+    /// let mut quad_tree = QuadTree::new_with_dyn_cap(Boundary::between_points((0,0),(10,10)), 5);
+    /// assert!(quad_tree.insert(Item {
+    ///     x: 5,
+    ///     y: 5,
+    /// }).is_ok());
+    /// ```
+    pub fn insert(&mut self, item: Item) -> Result<(), QuadTreeError<C>> {
+        self.insert_at(item.as_point(), item)
+    }
+
 }
 
 impl<C, Item> QuadTree<C, Item, DynCap>
@@ -327,5 +367,25 @@ mod tests {
     fn format_display_error() {
         let e = super::QuadTreeError::OutOfBounds(Boundary::between_points((1,2), (2,3)), (10,20).into());
         assert_eq!("point (10,20) is outside of area (1,2),(2,3)", format!("{}", e));
+    }
+
+    #[test]
+    fn insert_item() {
+        struct TmpItem {
+            x: usize,
+            y: usize,
+            content: &'static str,
+        }
+        impl super::AsPoint<usize> for TmpItem {
+            fn as_point(&self) -> Point<usize> {
+                (self.x, self.y).into()
+            }
+        }
+        let mut qt = super::QuadTree::new_with_dyn_cap(Boundary::between_points((0,0), (10,10)), 5);
+        assert!(qt.insert(TmpItem {
+            x: 5, y: 5, content: "test"
+        }).is_ok());
+        let mut query = qt.query(Boundary::new((4,4), 2, 2));
+        assert_eq!(query.next().unwrap().content, "test");
     }
 }
