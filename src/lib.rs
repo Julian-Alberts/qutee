@@ -3,7 +3,7 @@
 //! ```
 //! use qutee::*;
 //! // Create a new quadtree where the area's top left corner is at -10, -10, with a width and height of 20.
-//! let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((-10., -10.), 20., 20.), 5);
+//! let mut tree = QuadTree::new_with_dyn_cap(Boundary::new((-10., -10.), 20., 20.), 5);
 //! assert!(tree.insert_at((0.5, 0.1), "A").is_ok());
 //! assert!(tree.insert_at((-1., 1.), "B").is_ok());
 //! // This point is outside the tree
@@ -140,7 +140,7 @@ where
     C: Coordinate,
 {
     /// Create a new QuadTree
-    pub fn new_with_runtime_cap(boundary: Boundary<C>, cap: usize) -> Self {
+    pub fn new_with_dyn_cap(boundary: Boundary<C>, cap: usize) -> Self {
         Self::new_with_capacity(boundary, DynCap(cap))
     }
 }
@@ -220,14 +220,14 @@ mod tests {
 
     #[test]
     fn insert_single() {
-        let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((0, 0), 10, 10), 10);
+        let mut tree = QuadTree::new_with_dyn_cap(Boundary::new((0, 0), 10, 10), 10);
         assert!(tree.insert_at((10, 10), 1u8).is_ok());
         assert_eq!(tree.items[0], ((10, 10).into(), 1));
     }
 
     #[test]
     fn insert_out_of_bounds() {
-        let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((0, 0), 10, 10), 10);
+        let mut tree = QuadTree::new_with_dyn_cap(Boundary::new((0, 0), 10, 10), 10);
         assert_eq!(
             tree.insert_at((20, 20), 1u8),
             Err(QuadTreeError::OutOfBounds(
@@ -239,7 +239,7 @@ mod tests {
 
     #[test]
     fn insert_more_than_capacity() {
-        let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((0, 0), 10, 10), 1);
+        let mut tree = QuadTree::new_with_dyn_cap(Boundary::new((0, 0), 10, 10), 1);
         assert!(tree.quadrants.is_none());
 
         assert!(tree.insert_at((1, 1), 1).is_ok());
@@ -266,7 +266,7 @@ mod tests {
 
     #[test]
     fn query() {
-        let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((-10, -10), 20, 20), 2);
+        let mut tree = QuadTree::new_with_dyn_cap(Boundary::new((-10, -10), 20, 20), 2);
         let mut expected = Vec::new();
         for i in 1..10 {
             assert!(tree.insert_at((i, i), i).is_ok());
@@ -289,7 +289,7 @@ mod tests {
 
     #[test]
     fn iter() {
-        let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((-10, -10), 20, 20), 2);
+        let mut tree = QuadTree::new_with_dyn_cap(Boundary::new((-10, -10), 20, 20), 2);
         let mut expected = Vec::new();
         for i in 1..10 {
             assert!(tree.insert_at((i, i), i).is_ok());
