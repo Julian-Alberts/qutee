@@ -1,16 +1,45 @@
-# QuTee
+# Qutee
 
-QuTee is a simple implementation of a quadtree.
-The advantage of QuTee over most other implementations is
-that you can choose which data type you want to use as your coordinates.
-By default, all primitive number types are supported as coordinates.
-Values do not require any special traits to be used.
+Qutee is a simple implementation of a quad tree.
+Qutee allows you to choose which primitive number type should be used for coordinates.
+Items of the quad tree do not require any trait bounds.
+
+## Boundary
+A boundary can be constructed with `Boundary::new` or `Boundary::between_points`.
+`Boundary::new` takes a `Point` as its first argument followed by a width and height.
+`Boundary::between_points` takes two `Point` Objects.
+
+## Point
+A point in 2D space.
+A point can be constructed with `Point::new`. This function takes an `x` and `y` argument.
+Most functions do not require a `Point` directly but take `impl Into<Point>` as an argument.
+This allows for an tuple to be used where the first item is `x` and the second `y`.
+
+## QuadTree
+QuadTree provides the actual quad tree implementation. QuadTree has two required and one optional generic parameter.
+The first two arguments are the coordinate and item type. The third parameter defines how the max capacity for each level is defined.
+By default this argument is set to `DynCapacity` you can change this to `ConstCapacity` if you know the size at compile time.
+
+### Create
+To create a `QuadTree` you can use one of three methods
+1. new_with_capacity takes a `Boundary` and parameter of type `Capacity`.
+2. new_with_dyn_cap takes a `Boundary` and a capacity of type usize. This function is only available if the capacity is dynamic.
+3. new_with_dyn_cap takes a `Boundary`. This function is only available if the capacity is known at compile time.
+
+### Insert
+A item can be inserted using the `insert_at` function. The first parameter is the point and the second the item.
+
+### Query
+`query` takes a `Boundary` and returns an Iterator of type `Query`
+
+### Iter
+`iter` returns an Iterator of type `Iter` containing all items in the tree.
 
 ## Example
 ```rust
 use qutee::*;
 // Create a new quadtree where the area's top left corner is at -10, -10, with a width and height of 20.
-let mut tree = QuadTree::new_with_runtime_cap(Boundary::new((-10., -10.), 20., 20.), 5);
+let mut tree = QuadTree::new_with_dyn_cap(Boundary::new((-10., -10.), 20., 20.), 5);
 assert!(tree.insert_at((0.5, 0.1), "A").is_ok());
 assert!(tree.insert_at((-1., 1.), "B").is_ok());
 // This point is outside the tree
@@ -25,55 +54,3 @@ assert_eq!(iter.next(), Some(&"A"));
 assert_eq!(iter.next(), Some(&"B"));
 assert!(iter.next().is_none());
 ```
-
-## Important types
-### QuadTree
-A tree requires three important pieces of information:
-1. What type do you want to use for your positions? This can be any primitive number type.
-2. What type of element do you want to store in your tree?
-3. How many Elements do you want to save in each area? Lower values might
-increase query speeds, while larger values can improve insertion speed by reducing the number of memory allocations needed.
-
-I recommend creating a custom type in which you warp the quadtree.
-Otherwise, you might have definitions like this all over your code.
-```rust
-let quad_tree: qutee::QuadTree<f64, String, CompileTimeCap<16>>;
-```
-
-#### Functions
-<b>new(Boundary) -> Self</b>
-
-Create a new quadtree that accepts values inside the given area.
-
-<b>insert_at(impl Into&lt;Point&gt;, Item) -> Result<(), QuadTreeError></b>
-
-Insert an item at a given point. Points can be created using `Point::new(PU, PU)` or simply using a tuple `(PU, PU)`.
-
-<b>query(Boundary) -> Query</b>
-
-Query returns an iterator over all items inside the given boundary.
-
-<b>iter() -> Iter</b>
-
-Returns an iterator over all items inside the tree
-
-### Boundary
-A boundary represents an area in 2D space.
-
-#### Functions
-<b>new(Point, PU, PU) -> Self</b>
-
-Create a new Boundary where the point is at the top left. The other two values represent width and height.
-
-<b>between_points(Point, Point)</b>
-
-Create a new Boundary between two points.
-
-### Point
-A single point in 2D space.
-
-### Query
-A query is an iterator over all items of a quadtree within a given `Boundary`.
-
-### Iter
-An iterator over all items inside a `QuadTree`.
