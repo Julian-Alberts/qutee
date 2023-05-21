@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2021"
 keywords = ["quadtree", "data structure", "2d"]
 authors = ["Julian Alberts"]
-description = "A small qute implementation of a quadtree"
+description = "A implementation of a quadtree"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Julian-Alberts/qutee"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
