@@ -1,24 +1,24 @@
 # Qutee
 
-Qutee is a simple implementation of a quad tree.
+Qutee is a simple implementation of a quadtree.
 Qutee allows you to choose which primitive number type should be used for coordinates.
-Items of the quad tree do not require any trait bounds.
+Items of the quadtree do not require any trait bounds.
 
 ## Boundary
 A boundary can be constructed with `Boundary::new` or `Boundary::between_points`.
-`Boundary::new` takes a `Point` as its first argument followed by a width and height.
+`Boundary::new` takes a `Point` as its first argument, followed by a width and height.
 `Boundary::between_points` takes two `Point` Objects.
 
 ## Point
 A point in 2D space.
-A point can be constructed with `Point::new`. This function takes an `x` and `y` argument.
-Most functions do not require a `Point` directly but take `impl Into<Point>` as an argument.
-This allows for an tuple to be used where the first item is `x` and the second `y`.
+A point can be constructed with `Point::new`. This function takes an `x` and `y' argument.
+Most functions do not directly require a `Point` but take `impl Into<Point>` as an argument.
+This allows for a tuple to be used as a point where the first item is `x` and the second `y'.
 
 ## QuadTree
-QuadTree provides the actual quad tree implementation. QuadTree has two required and one optional generic parameter.
-The first two arguments are the coordinate and item type. The third parameter defines how the max capacity for each level is defined.
-By default this argument is set to `DynCapacity` you can change this to `ConstCapacity` if you know the size at compile time.
+QuadTree provides the actual quadtree implementation. QuadTree has two required and one optional generic parameter.
+The first two arguments are the coordinate and item type. The third parameter defines how the max capacity for each level is determined.
+By default, this argument is set to `DynCapacity`. You can change this to `ConstCapacity` if you know the size at compile time.
 
 ### Create
 To create a `QuadTree` you can use one of three methods
@@ -27,8 +27,8 @@ To create a `QuadTree` you can use one of three methods
 3. new_with_dyn_cap takes a `Boundary`. This function is only available if the capacity is known at compile time.
 
 ### Insert
-A item can be inserted using the `insert` function. This function requires for item to implement `AsPoint`.
-If your item does not implement `AsPoint` you can use `insert_at`. The first parameter is the point and the second the item.
+An item can be inserted using the `insert` function. This function requires for item to implement `AsPoint`.
+If your item does not implement `AsPoint`, you can use `insert_at`. The first parameter is the point, and the second is the item.
 
 ### Query
 `query` takes a `Boundary` and returns an Iterator of type `Query`
