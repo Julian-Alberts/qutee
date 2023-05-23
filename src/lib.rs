@@ -45,7 +45,7 @@ where
 {
     boundary: Boundary<C>,
     quadrants: Option<Box<[QuadTree<C, Item, Cap>; 4]>>,
-    items: Vec<(Point<C>, Item)>,
+    items: Option<Vec<(Point<C>, Item)>>,
     capacity: Cap,
 }
 
@@ -98,7 +98,7 @@ where
         Self {
             boundary,
             quadrants: None,
-            items: Vec::with_capacity(capacity.capacity()),
+            items: None,
             capacity,
         }
     }
@@ -113,7 +113,11 @@ where
         if !self.boundary.contains(&point) {
             return Err(QuadTreeError::OutOfBounds(self.boundary.clone(), point));
         }
-        if self.quadrants.is_none() && self.items.len() >= self.capacity.capacity() {
+        if self.items.as_ref().map(|i| i.len()).unwrap_or_default() < self.capacity.capacity() {
+            self.items.get_or_insert_with(|| Vec::with_capacity(self.capacity.capacity())).push((point, value));
+            return Ok(());
+        }
+        if self.quadrants.is_none() {
             let [b0, b1, b2, b3] = self.boundary.split();
             self.quadrants = Some(Box::new([
                 QuadTree::new_with_capacity(b0, self.capacity),
@@ -123,14 +127,13 @@ where
             ]));
         }
         if let Some(quads) = &mut self.quadrants {
-            let sub_tree = quads
-                .iter_mut()
-                .find(|tree| tree.boundary.contains(&point))
-                .expect("Tree did not split correctly");
+            let is_in_right_half = (quads[0].boundary.p2.x < point.x) as usize;
+            let is_in_bottom_half = (quads[0].boundary.p2.y < point.y) as usize;
+            let index = is_in_bottom_half << 1 | is_in_right_half;
+            let sub_tree = &mut quads[index];
             return sub_tree.insert_at(point, value);
         }
-        self.items.push((point, value));
-        Ok(())
+        unreachable!()
     }
 
     /// Get all items in a given area.
@@ -248,19 +251,19 @@ mod tests {
             QuadTree {
                 boundary,
                 quadrants: None,
-                items: Vec::new(),
+                items: None,
                 capacity: ConstCap,
             },
             tree
         );
-        assert_eq!(20, tree.items.capacity())
+        assert_eq!(None, tree.items)
     }
 
     #[test]
     fn insert_single() {
         let mut tree = QuadTree::new_with_dyn_cap(Boundary::new((0, 0), 10, 10), 10);
         assert!(tree.insert_at((10, 10), 1u8).is_ok());
-        assert_eq!(tree.items[0], ((10, 10).into(), 1));
+        assert_eq!(tree.items.unwrap()[0], ((10, 10).into(), 1));
     }
 
     #[test]
@@ -282,24 +285,24 @@ mod tests {
 
         assert!(tree.insert_at((1, 1), 1).is_ok());
         assert!(tree.quadrants.is_none());
-        assert_eq!(tree.items.len(), 1);
+        assert_eq!(tree.items.as_ref().unwrap().len(), 1);
 
         assert!(tree.insert_at((2, 2), 1).is_ok());
-        assert_eq!(tree.items.len(), 1);
+        assert_eq!(tree.items.as_ref().unwrap().len(), 1);
         assert!(tree.quadrants.is_some());
         let quads = tree.quadrants.as_ref().unwrap();
-        assert_eq!(quads[0].items.len(), 1);
-        assert_eq!(quads[1].items.len(), 0);
-        assert_eq!(quads[2].items.len(), 0);
-        assert_eq!(quads[3].items.len(), 0);
+        assert_eq!(quads[0].items.as_ref().unwrap().len(), 1);
+        assert_eq!(quads[1].items, None);
+        assert_eq!(quads[2].items, None);
+        assert_eq!(quads[3].items, None);
 
         assert!(tree.insert_at((7, 7), 1).is_ok());
         assert!(tree.quadrants.is_some());
         let quads = tree.quadrants.as_ref().unwrap();
-        assert_eq!(quads[0].items.len(), 1);
-        assert_eq!(quads[1].items.len(), 0);
-        assert_eq!(quads[2].items.len(), 0);
-        assert_eq!(quads[3].items.len(), 1);
+        assert_eq!(quads[0].items.as_ref().unwrap().len(), 1);
+        assert_eq!(quads[1].items, None);
+        assert_eq!(quads[2].items, None);
+        assert_eq!(quads[3].items.as_ref().unwrap().len(), 1);
     }
 
     #[test]

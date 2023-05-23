@@ -7,7 +7,7 @@ where
     PU: Coordinate,
 {
     quadrants: Option<&'a [QuadTree<PU, Item, Cap>]>,
-    items: &'a [(Point<PU>, Item)],
+    items: Option<&'a [(Point<PU>, Item)]>,
     current_sub_query: Option<Box<Query<'a, PU, Item, Cap>>>,
     boundary: Boundary<PU>,
 }
@@ -19,7 +19,7 @@ where
 {
     pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>, boundary: Boundary<PU>) -> Self {
         Self {
-            items: tree.items.as_slice(),
+            items: tree.items.as_ref().map(|i| i.as_slice()),
             quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
             current_sub_query: None,
             boundary,
@@ -50,9 +50,9 @@ where
     type Item = &'a Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while !self.items.is_empty() {
-            let item = &self.items[0];
-            self.items = &self.items[1..];
+        while self.items.map(|items| !items.is_empty()).unwrap_or_default() {
+            let item = &self.items.unwrap()[0];
+            self.items = self.items.map(|i| &i[1..]);
             if self.boundary.contains(&item.0) {
                 return Some(&item.1);
             }
@@ -81,7 +81,7 @@ where
     PU: Coordinate,
 {
     quadrants: Option<&'a [QuadTree<PU, Item, Cap>]>,
-    items: &'a [(Point<PU>, Item)],
+    items: Option<&'a [(Point<PU>, Item)]>,
     current_sub_query: Option<Box<Iter<'a, PU, Item, Cap>>>,
 }
 
@@ -92,7 +92,7 @@ where
 {
     pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>) -> Self {
         Self {
-            items: tree.items.as_slice(),
+            items: tree.items.as_ref().map(|i|i.as_slice()),
             quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
             current_sub_query: None,
         }
@@ -117,9 +117,9 @@ where
     type Item = &'a Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if !self.items.is_empty() {
-            let item = &self.items[0].1;
-            self.items = &self.items[1..];
+        if self.items.map(|i|!i.is_empty()).unwrap_or_default() {
+            let item = &self.items.unwrap()[0].1;
+            self.items = self.items.map(|i| &i[1..]);
             return Some(item);
         }
         if self.current_sub_query.is_none() {

@@ -8,8 +8,8 @@ pub struct Boundary<C>
 where
     C: Coordinate,
 {
-    p1: Point<C>,
-    p2: Point<C>,
+    pub(crate) p1: Point<C>,
+    pub(crate) p2: Point<C>,
 }
 
 impl<C> Display for Boundary<C>
