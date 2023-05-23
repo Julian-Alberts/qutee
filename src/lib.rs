@@ -126,7 +126,7 @@ where
             let sub_tree = quads
                 .iter_mut()
                 .find(|tree| tree.boundary.contains(&point))
-                .expect(&format!("Tree did not split correctly {} p: {}", self.boundary, point));
+                .expect("Tree did not split correctly");
             return sub_tree.insert_at(point, value);
         }
         self.items.push((point, value));
