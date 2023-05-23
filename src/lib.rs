@@ -113,27 +113,30 @@ where
         if !self.boundary.contains(&point) {
             return Err(QuadTreeError::OutOfBounds(self.boundary.clone(), point));
         }
+        self.insert_at_unchecked(point, value);
+        Ok(())
+    }
+
+    fn insert_at_unchecked(&mut self, point: Point<C>, value: Item) {
         if self.items.as_ref().map(|i| i.len()).unwrap_or_default() < self.capacity.capacity() {
             self.items.get_or_insert_with(|| Vec::with_capacity(self.capacity.capacity())).push((point, value));
-            return Ok(());
+            return;
         }
-        if self.quadrants.is_none() {
+        let quads = self.quadrants.get_or_insert_with(|| {
             let [b0, b1, b2, b3] = self.boundary.split();
-            self.quadrants = Some(Box::new([
+            Box::new([
                 QuadTree::new_with_capacity(b0, self.capacity),
                 QuadTree::new_with_capacity(b1, self.capacity),
                 QuadTree::new_with_capacity(b2, self.capacity),
                 QuadTree::new_with_capacity(b3, self.capacity),
-            ]));
-        }
-        if let Some(quads) = &mut self.quadrants {
-            let is_in_right_half = (quads[0].boundary.p2.x < point.x) as usize;
-            let is_in_bottom_half = (quads[0].boundary.p2.y < point.y) as usize;
-            let index = is_in_bottom_half << 1 | is_in_right_half;
-            let sub_tree = &mut quads[index];
-            return sub_tree.insert_at(point, value);
-        }
-        unreachable!()
+            ])
+        });
+
+        let is_in_right_half = (quads[0].boundary.p2.x < point.x) as usize;
+        let is_in_bottom_half = (quads[0].boundary.p2.y < point.y) as usize;
+        let index = is_in_bottom_half << 1 | is_in_right_half;
+        let sub_tree = &mut quads[index];
+        sub_tree.insert_at_unchecked(point, value);
     }
 
     /// Get all items in a given area.
