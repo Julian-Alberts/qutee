@@ -53,6 +53,10 @@ where
         Self { p1, p2 }
     }
 
+    fn between_points_unchecked(p1: impl Into<Point<C>>, p2: impl Into<Point<C>>) -> Self {
+        Self { p1: p1.into(), p2: p2.into() }
+    }
+
     pub(crate) fn split(&self) -> [Boundary<C>; 4] {
         let dx = self.p2.x - self.p1.x;
         let dy = self.p2.y - self.p1.y;
@@ -61,9 +65,9 @@ where
         let half_dy = dy / two;
         [
             Boundary::new(self.p1.clone(), half_dx, half_dy),
-            Boundary::between_points((self.p1.x + half_dx, self.p1.y), (self.p2.x, self.p1.y + half_dy)),
-            Boundary::between_points((self.p1.x, self.p1.y + half_dy), (self.p1.x + half_dx, self.p2.y)),
-            Boundary::between_points((self.p1.x + half_dx, self.p1.y + half_dy), self.p2.clone()),
+            Boundary::between_points_unchecked((self.p1.x + half_dx, self.p1.y), (self.p2.x, self.p1.y + half_dy)),
+            Boundary::between_points_unchecked((self.p1.x, self.p1.y + half_dy), (self.p1.x + half_dx, self.p2.y)),
+            Boundary::between_points_unchecked((self.p1.x + half_dx, self.p1.y + half_dy), self.p2.clone()),
         ]
     }
 
