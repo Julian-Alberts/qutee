@@ -61,7 +61,8 @@ where
 
 /// This traits allowes a type to be used with `qutee::QuadTree::insert`
 pub trait AsPoint<C>
-    where C: Coordinate
+where
+    C: Coordinate,
 {
     /// Get the position of an item
     fn as_point(&self) -> Point<C>;
@@ -125,7 +126,7 @@ where
             let sub_tree = quads
                 .iter_mut()
                 .find(|tree| tree.boundary.contains(&point))
-                .expect("Tree did not split correctly");
+                .expect(&format!("Tree did not split correctly {} p: {}", self.boundary, point));
             return sub_tree.insert_at(point, value);
         }
         self.items.push((point, value));
@@ -143,14 +144,12 @@ where
     }
 }
 
-
 impl<C, Item, Cap> QuadTree<C, Item, Cap>
 where
     Cap: Capacity,
     C: Coordinate,
-    Item: AsPoint<C>
+    Item: AsPoint<C>,
 {
-
     /// Insert a new item
     /// ```
     /// use qutee::*;
@@ -172,7 +171,6 @@ where
     pub fn insert(&mut self, item: Item) -> Result<(), QuadTreeError<C>> {
         self.insert_at(item.as_point(), item)
     }
-
 }
 
 impl<C, Item> QuadTree<C, Item, DynCap>
@@ -359,14 +357,26 @@ mod tests {
 
     #[test]
     fn format_debug_error() {
-        let e = super::QuadTreeError::OutOfBounds(Boundary::between_points((1,2), (2,3)), (10,20).into());
-        assert_eq!("point (10,20) is outside of area (1,2),(2,3)", format!("{:#?}", e));
+        let e = super::QuadTreeError::OutOfBounds(
+            Boundary::between_points((1, 2), (2, 3)),
+            (10, 20).into(),
+        );
+        assert_eq!(
+            "point (10,20) is outside of area (1,2),(2,3)",
+            format!("{:#?}", e)
+        );
     }
 
     #[test]
     fn format_display_error() {
-        let e = super::QuadTreeError::OutOfBounds(Boundary::between_points((1,2), (2,3)), (10,20).into());
-        assert_eq!("point (10,20) is outside of area (1,2),(2,3)", format!("{}", e));
+        let e = super::QuadTreeError::OutOfBounds(
+            Boundary::between_points((1, 2), (2, 3)),
+            (10, 20).into(),
+        );
+        assert_eq!(
+            "point (10,20) is outside of area (1,2),(2,3)",
+            format!("{}", e)
+        );
     }
 
     #[test]
@@ -381,11 +391,16 @@ mod tests {
                 (self.x, self.y).into()
             }
         }
-        let mut qt = super::QuadTree::new_with_dyn_cap(Boundary::between_points((0,0), (10,10)), 5);
-        assert!(qt.insert(TmpItem {
-            x: 5, y: 5, content: "test"
-        }).is_ok());
-        let mut query = qt.query(Boundary::new((4,4), 2, 2));
+        let mut qt =
+            super::QuadTree::new_with_dyn_cap(Boundary::between_points((0, 0), (10, 10)), 5);
+        assert!(qt
+            .insert(TmpItem {
+                x: 5,
+                y: 5,
+                content: "test"
+            })
+            .is_ok());
+        let mut query = qt.query(Boundary::new((4, 4), 2, 2));
         assert_eq!(query.next().unwrap().content, "test");
     }
 }

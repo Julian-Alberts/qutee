@@ -61,9 +61,9 @@ where
         let half_dy = dy / two;
         [
             Boundary::new(self.p1.clone(), half_dx, half_dy),
-            Boundary::new((self.p1.x + half_dx, self.p1.y), half_dx, half_dy),
-            Boundary::new((self.p1.x, self.p1.y + half_dy), half_dx, half_dy),
-            Boundary::new((self.p1.x + half_dx, self.p1.y + half_dy), half_dx, half_dy),
+            Boundary::between_points((self.p1.x + half_dx, self.p1.y), (self.p2.x, self.p1.y + half_dy)),
+            Boundary::between_points((self.p1.x, self.p1.y + half_dy), (self.p1.x + half_dx, self.p2.y)),
+            Boundary::between_points((self.p1.x + half_dx, self.p1.y + half_dy), self.p2.clone()),
         ]
     }
 
@@ -116,6 +116,7 @@ mod tests {
 
     #[test_case(3,3 => true; "Contains point")]
     #[test_case(2,2 => true; "Contains point on border")]
+    #[test_case(4,4 => true; "Contains point on border 2")]
     #[test_case(1,3 => false; "Point above")]
     #[test_case(5,3 => false; "Point below")]
     #[test_case(3,1 => false; "Point left")]
@@ -156,5 +157,27 @@ mod tests {
     fn format_boundary() {
         let b = Boundary::between_points((12, 34), (23, 45));
         assert_eq!("(12,34),(23,45)", format!("{b}"))
+    }
+
+    #[test]
+    fn tree_spit_test() {
+        let b = Boundary::between_points((16383usize, 16383), (32766, 32766));
+        let sub_bounds = b.split();
+        assert_eq!(sub_bounds[0], Boundary {
+            p1: (16383, 16383).into(),
+            p2: (16383 + 8191, 16383 + 8191).into(),
+        });
+        assert_eq!(sub_bounds[1], Boundary {
+            p1: (16383 + 8191, 16383).into(),
+            p2: (32766, 16383 + 8191).into(),
+        });
+        assert_eq!(sub_bounds[2], Boundary {
+            p1: (16383, 16383 + 8191).into(),
+            p2: (16383 + 8191, 32766).into(),
+        });
+        assert_eq!(sub_bounds[3], Boundary {
+            p1: (16383 + 8191, 16383 + 8191).into(),
+            p2: (32766, 32766).into(),
+        });
     }
 }
