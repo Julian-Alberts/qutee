@@ -6,3 +6,4 @@ lcov.info
 tarpaulin-report.html
 perf.data*
 flamegraph.svg
+cachegrind.*
