@@ -120,25 +120,27 @@ where
 
     #[inline]
     fn insert_at_unchecked(&mut self, point: Point<C>, value: Item) {
-        if self.items.as_ref().map(|i| i.len()).unwrap_or_default() < self.capacity.capacity() {
-            self.items.get_or_insert_with(|| Vec::with_capacity(self.capacity.capacity())).push((point, value));
-            return;
-        }
-        let quads = self.quadrants.get_or_insert_with(|| {
-            let [b0, b1, b2, b3] = self.boundary.split();
-            Box::new([
-                QuadTree::new_with_capacity(b0, self.capacity),
-                QuadTree::new_with_capacity(b1, self.capacity),
-                QuadTree::new_with_capacity(b2, self.capacity),
-                QuadTree::new_with_capacity(b3, self.capacity),
-            ])
-        });
+        let mut sub_tree = self;
+        loop {
+            if sub_tree.items.as_ref().map(|i| i.len()).unwrap_or_default() < sub_tree.capacity.capacity() {
+                sub_tree.items.get_or_insert_with(|| Vec::with_capacity(sub_tree.capacity.capacity())).push((point, value));
+                return;
+            }
+            let quads = sub_tree.quadrants.get_or_insert_with(|| {
+                let [b0, b1, b2, b3] = sub_tree.boundary.split();
+                Box::new([
+                    QuadTree::new_with_capacity(b0, sub_tree.capacity),
+                    QuadTree::new_with_capacity(b1, sub_tree.capacity),
+                    QuadTree::new_with_capacity(b2, sub_tree.capacity),
+                    QuadTree::new_with_capacity(b3, sub_tree.capacity),
+                ])
+            });
 
-        let is_in_right_half = (quads[0].boundary.p2.x < point.x) as usize;
-        let is_in_bottom_half = (quads[0].boundary.p2.y < point.y) as usize;
-        let index = is_in_bottom_half << 1 | is_in_right_half;
-        let sub_tree = &mut quads[index];
-        sub_tree.insert_at_unchecked(point, value);
+            let is_in_right_half = (quads[0].boundary.p2.x < point.x) as usize;
+            let is_in_bottom_half = (quads[0].boundary.p2.y < point.y) as usize;
+            let index = is_in_bottom_half << 1 | is_in_right_half;
+            sub_tree = &mut quads[index];
+        }
     }
 
     /// Get all items in a given area.
