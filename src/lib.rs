@@ -59,7 +59,7 @@ where
     OutOfBounds(Boundary<C>, Point<C>),
 }
 
-/// This traits allowes a type to be used with `qutee::QuadTree::insert`
+/// This traits allows a type to be used with `qutee::QuadTree::insert`
 pub trait AsPoint<C>
 where
     C: Coordinate,
@@ -104,6 +104,7 @@ where
     }
 
     /// Insert new item into the quad tree.
+    #[inline]
     pub fn insert_at(
         &mut self,
         point: impl Into<Point<C>>,
@@ -117,6 +118,7 @@ where
         Ok(())
     }
 
+    #[inline]
     fn insert_at_unchecked(&mut self, point: Point<C>, value: Item) {
         if self.items.as_ref().map(|i| i.len()).unwrap_or_default() < self.capacity.capacity() {
             self.items.get_or_insert_with(|| Vec::with_capacity(self.capacity.capacity())).push((point, value));
@@ -174,6 +176,7 @@ where
     ///     y: 5,
     /// }).is_ok());
     /// ```
+    #[inline]
     pub fn insert(&mut self, item: Item) -> Result<(), QuadTreeError<C>> {
         self.insert_at(item.as_point(), item)
     }
