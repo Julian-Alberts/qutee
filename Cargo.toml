@@ -2,7 +2,8 @@
 name = "qutee"
 version = "0.1.0"
 edition = "2021"
-keywords = ["quadtree", "data structure", "2d"]
+keywords = ["quadtree", "2d"]
+categories = ["data-structures"]
 authors = ["Julian Alberts"]
 description = "A quadtree implementation"
 license = "MIT OR Apache-2.0"
