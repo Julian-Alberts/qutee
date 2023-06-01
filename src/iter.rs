@@ -1,11 +1,11 @@
-use crate::{bounds::Capacity, Coordinate, Point, QuadTree, Area};
+use crate::{bounds::Capacity, Area, Coordinate, Point, QuadTree};
 
 /// Query Iterator
 pub struct Query<'a, PU, A, Item, Cap>
 where
     Cap: Capacity,
     PU: Coordinate,
-    A: Area<PU>
+    A: Area<PU>,
 {
     quadrants: Option<&'a [QuadTree<PU, Item, Cap>]>,
     items: Option<&'a [(Point<PU>, Item)]>,
@@ -17,11 +17,11 @@ impl<'a, PU, Item, Cap, A> Query<'a, PU, A, Item, Cap>
 where
     Cap: Capacity,
     PU: Coordinate,
-    A: Area<PU> + Clone
+    A: Area<PU> + Clone,
 {
     pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>, area: A) -> Self {
         Self {
-            items: tree.items.as_ref().map(|i| i.as_slice()),
+            items: tree.items.as_deref(),
             quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
             current_sub_query: None,
             area,
@@ -48,12 +48,16 @@ impl<'a, PU, A, Item, Cap> Iterator for Query<'a, PU, A, Item, Cap>
 where
     Cap: Capacity,
     PU: Coordinate,
-    A: Area<PU>
+    A: Area<PU>,
 {
     type Item = &'a Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        while self.items.map(|items| !items.is_empty()).unwrap_or_default() {
+        while self
+            .items
+            .map(|items| !items.is_empty())
+            .unwrap_or_default()
+        {
             let item = &self.items.unwrap()[0];
             self.items = self.items.map(|i| &i[1..]);
             if self.area.contains(&item.0) {
@@ -95,7 +99,7 @@ where
 {
     pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>) -> Self {
         Self {
-            items: tree.items.as_ref().map(|i|i.as_slice()),
+            items: tree.items.as_deref(),
             quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
             current_sub_query: None,
         }
@@ -120,7 +124,7 @@ where
     type Item = &'a Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.items.map(|i|!i.is_empty()).unwrap_or_default() {
+        if self.items.map(|i| !i.is_empty()).unwrap_or_default() {
             let item = &self.items.unwrap()[0].1;
             self.items = self.items.map(|i| &i[1..]);
             return Some(item);

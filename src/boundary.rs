@@ -62,7 +62,10 @@ where
     }
 
     fn between_points_unchecked(p1: impl Into<Point<C>>, p2: impl Into<Point<C>>) -> Self {
-        Self { p1: p1.into(), p2: p2.into() }
+        Self {
+            p1: p1.into(),
+            p2: p2.into(),
+        }
     }
 
     pub(crate) fn split(&self) -> [Boundary<C>; 4] {
@@ -73,9 +76,18 @@ where
         let half_dy = dy / two;
         [
             Boundary::new(self.p1.clone(), half_dx, half_dy),
-            Boundary::between_points_unchecked((self.p1.x + half_dx, self.p1.y), (self.p2.x, self.p1.y + half_dy)),
-            Boundary::between_points_unchecked((self.p1.x, self.p1.y + half_dy), (self.p1.x + half_dx, self.p2.y)),
-            Boundary::between_points_unchecked((self.p1.x + half_dx, self.p1.y + half_dy), self.p2.clone()),
+            Boundary::between_points_unchecked(
+                (self.p1.x + half_dx, self.p1.y),
+                (self.p2.x, self.p1.y + half_dy),
+            ),
+            Boundary::between_points_unchecked(
+                (self.p1.x, self.p1.y + half_dy),
+                (self.p1.x + half_dx, self.p2.y),
+            ),
+            Boundary::between_points_unchecked(
+                (self.p1.x + half_dx, self.p1.y + half_dy),
+                self.p2.clone(),
+            ),
         ]
     }
 
@@ -88,15 +100,25 @@ where
     pub fn bottom_right(&self) -> &Point<C> {
         &self.p2
     }
-
 }
-impl <C> Area<C> for Boundary<C> where C: Coordinate {
+impl<C> Area<C> for Boundary<C>
+where
+    C: Coordinate,
+{
     fn contains(&self, point: &Point<C>) -> bool {
-        ((point.x < self.p1.x) as usize + (point.x > self.p2.x) as usize + (point.y < self.p1.y) as usize + (point.y > self.p2.y) as usize) == 0
+        ((point.x < self.p1.x) as usize
+            + (point.x > self.p2.x) as usize
+            + (point.y < self.p1.y) as usize
+            + (point.y > self.p2.y) as usize)
+            == 0
     }
 
     fn intersects(&self, Boundary { p1, p2 }: &Boundary<C>) -> bool {
-        ((p2.x < self.p1.x) as usize + (p1.x > self.p2.x) as usize + (p2.y < self.p1.y) as usize + (p1.y > self.p2.y) as usize) == 0
+        ((p2.x < self.p1.x) as usize
+            + (p1.x > self.p2.x) as usize
+            + (p2.y < self.p1.y) as usize
+            + (p1.y > self.p2.y) as usize)
+            == 0
     }
 }
 
@@ -117,7 +139,7 @@ impl Coordinate for f64 {}
 
 #[cfg(test)]
 mod tests {
-    use crate::{Boundary, Point, Area};
+    use crate::{Area, Boundary, Point};
     use test_case::test_case;
 
     #[test_case(1,1,2,2 => Boundary::new((1,1),1,1); "Simple case")]
@@ -187,21 +209,33 @@ mod tests {
     fn tree_spit_test() {
         let b = Boundary::between_points((16383usize, 16383), (32766, 32766));
         let sub_bounds = b.split();
-        assert_eq!(sub_bounds[0], Boundary {
-            p1: (16383, 16383).into(),
-            p2: (16383 + 8191, 16383 + 8191).into(),
-        });
-        assert_eq!(sub_bounds[1], Boundary {
-            p1: (16383 + 8191, 16383).into(),
-            p2: (32766, 16383 + 8191).into(),
-        });
-        assert_eq!(sub_bounds[2], Boundary {
-            p1: (16383, 16383 + 8191).into(),
-            p2: (16383 + 8191, 32766).into(),
-        });
-        assert_eq!(sub_bounds[3], Boundary {
-            p1: (16383 + 8191, 16383 + 8191).into(),
-            p2: (32766, 32766).into(),
-        });
+        assert_eq!(
+            sub_bounds[0],
+            Boundary {
+                p1: (16383, 16383).into(),
+                p2: (16383 + 8191, 16383 + 8191).into(),
+            }
+        );
+        assert_eq!(
+            sub_bounds[1],
+            Boundary {
+                p1: (16383 + 8191, 16383).into(),
+                p2: (32766, 16383 + 8191).into(),
+            }
+        );
+        assert_eq!(
+            sub_bounds[2],
+            Boundary {
+                p1: (16383, 16383 + 8191).into(),
+                p2: (16383 + 8191, 32766).into(),
+            }
+        );
+        assert_eq!(
+            sub_bounds[3],
+            Boundary {
+                p1: (16383 + 8191, 16383 + 8191).into(),
+                p2: (32766, 32766).into(),
+            }
+        );
     }
 }

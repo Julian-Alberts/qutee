@@ -112,6 +112,8 @@ where
     }
 
     /// Insert new item into the quad tree.
+    /// # Errors
+    /// Returns an error if the point is out of bounds.
     #[inline]
     pub fn insert_at(
         &mut self,
@@ -130,8 +132,13 @@ where
     fn insert_at_unchecked(&mut self, point: Point<C>, value: Item) {
         let mut sub_tree = self;
         loop {
-            if sub_tree.items.as_ref().map(|i| i.len()).unwrap_or_default() < sub_tree.capacity.capacity() {
-                sub_tree.items.get_or_insert_with(|| Vec::with_capacity(sub_tree.capacity.capacity())).push((point, value));
+            if sub_tree.items.as_ref().map(|i| i.len()).unwrap_or_default()
+                < sub_tree.capacity.capacity()
+            {
+                sub_tree
+                    .items
+                    .get_or_insert_with(|| Vec::with_capacity(sub_tree.capacity.capacity()))
+                    .push((point, value));
                 return;
             }
             let quads = sub_tree.quadrants.get_or_insert_with(|| {
@@ -153,8 +160,8 @@ where
 
     /// Get all items in a given area.
     pub fn query<A>(&self, area: A) -> Query<'_, C, A, Item, Cap>
-        where
-        A: Area<C>
+    where
+        A: Area<C>,
     {
         Query::new(self, area)
     }
@@ -172,6 +179,9 @@ where
     Item: AsPoint<C>,
 {
     /// Insert a new item
+    /// # Errors
+    /// Returns an error if the item is out of bounds.
+    /// # Example
     /// ```
     /// use qutee::*;
     /// struct Item {
