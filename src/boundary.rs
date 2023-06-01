@@ -2,7 +2,15 @@ use std::fmt::{Debug, Display};
 
 use crate::Point;
 
-/// A Area
+/// Trait defining methods shared by all shapes
+pub trait Area<C: Coordinate>: Clone {
+    /// Checks if this shape contains the given point
+    fn contains(&self, point: &Point<C>) -> bool;
+    /// Checks if this shape and a given boundary intersect at any point
+    fn intersects(&self, boundary: &Boundary<C>) -> bool;
+}
+
+/// A rectangular area
 #[derive(Debug, Clone, PartialEq)]
 pub struct Boundary<C>
 where
@@ -71,11 +79,23 @@ where
         ]
     }
 
-    pub(crate) fn contains(&self, point: &Point<C>) -> bool {
+    /// Get top left corner
+    pub fn top_left(&self) -> &Point<C> {
+        &self.p1
+    }
+
+    /// Get Bottom right corner
+    pub fn bottom_right(&self) -> &Point<C> {
+        &self.p2
+    }
+
+}
+impl <C> Area<C> for Boundary<C> where C: Coordinate {
+    fn contains(&self, point: &Point<C>) -> bool {
         ((point.x < self.p1.x) as usize + (point.x > self.p2.x) as usize + (point.y < self.p1.y) as usize + (point.y > self.p2.y) as usize) == 0
     }
 
-    pub(crate) fn overlaps(&self, Boundary { p1, p2 }: &Boundary<C>) -> bool {
+    fn intersects(&self, Boundary { p1, p2 }: &Boundary<C>) -> bool {
         ((p2.x < self.p1.x) as usize + (p1.x > self.p2.x) as usize + (p2.y < self.p1.y) as usize + (p1.y > self.p2.y) as usize) == 0
     }
 }
@@ -97,7 +117,7 @@ impl Coordinate for f64 {}
 
 #[cfg(test)]
 mod tests {
-    use crate::{Boundary, Point};
+    use crate::{Boundary, Point, Area};
     use test_case::test_case;
 
     #[test_case(1,1,2,2 => Boundary::new((1,1),1,1); "Simple case")]
@@ -148,7 +168,7 @@ mod tests {
     fn boundary_overlaps(x: isize, y: isize, width: isize, height: isize) -> bool {
         let a = Boundary::new((1, 1), 4, 4);
         let b = Boundary::new((x, y), width, height);
-        a.overlaps(&b)
+        a.intersects(&b)
     }
 
     #[test]

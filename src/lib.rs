@@ -1,4 +1,10 @@
 #![warn(missing_docs)]
+#![warn(clippy::missing_errors_doc)]
+#![warn(clippy::missing_panics_doc)]
+#![warn(clippy::missing_errors_doc)]
+#![warn(unused_unsafe)]
+#![warn(clippy::suspicious)]
+#![warn(clippy::perf)]
 //! qutee is a small create which implements a quad tree.
 //! ```
 //! use qutee::*;
@@ -74,8 +80,10 @@ pub struct Point<C>
 where
     C: Coordinate,
 {
-    x: C,
-    y: C,
+    /// The x coordinate
+    pub x: C,
+    /// The y coordinate
+    pub y: C,
 }
 
 impl<T> Point<T>
@@ -144,8 +152,11 @@ where
     }
 
     /// Get all items in a given area.
-    pub fn query(&self, boundary: Boundary<C>) -> Query<'_, C, Item, Cap> {
-        Query::new(self, boundary)
+    pub fn query<A>(&self, area: A) -> Query<'_, C, A, Item, Cap>
+        where
+        A: Area<C>
+    {
+        Query::new(self, area)
     }
 
     /// Get an iterator over all items.

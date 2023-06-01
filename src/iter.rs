@@ -1,32 +1,34 @@
-use crate::{bounds::Capacity, Boundary, Coordinate, Point, QuadTree};
+use crate::{bounds::Capacity, Coordinate, Point, QuadTree, Area};
 
 /// Query Iterator
-pub struct Query<'a, PU, Item, Cap>
+pub struct Query<'a, PU, A, Item, Cap>
 where
     Cap: Capacity,
     PU: Coordinate,
+    A: Area<PU>
 {
     quadrants: Option<&'a [QuadTree<PU, Item, Cap>]>,
     items: Option<&'a [(Point<PU>, Item)]>,
-    current_sub_query: Option<Box<Query<'a, PU, Item, Cap>>>,
-    boundary: Boundary<PU>,
+    current_sub_query: Option<Box<Query<'a, PU, A, Item, Cap>>>,
+    area: A,
 }
 
-impl<'a, PU, Item, Cap> Query<'a, PU, Item, Cap>
+impl<'a, PU, Item, Cap, A> Query<'a, PU, A, Item, Cap>
 where
     Cap: Capacity,
     PU: Coordinate,
+    A: Area<PU> + Clone
 {
-    pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>, boundary: Boundary<PU>) -> Self {
+    pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>, area: A) -> Self {
         Self {
             items: tree.items.as_ref().map(|i| i.as_slice()),
             quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
             current_sub_query: None,
-            boundary,
+            area,
         }
     }
 
-    fn find_next_quadrant(&mut self) -> Option<Box<Query<'a, PU, Item, Cap>>> {
+    fn find_next_quadrant(&mut self) -> Option<Box<Query<'a, PU, A, Item, Cap>>> {
         let quadrants = self.quadrants.as_mut()?;
         if quadrants.is_empty() {
             return None;
@@ -34,18 +36,19 @@ where
         while !quadrants.is_empty() {
             let q = &quadrants[0];
             *quadrants = &quadrants[1..];
-            if q.boundary.overlaps(&self.boundary) {
-                return Some(Box::new(q.query(self.boundary.clone())));
+            if self.area.intersects(&q.boundary) {
+                return Some(Box::new(q.query(self.area.clone())));
             }
         }
         None
     }
 }
 
-impl<'a, PU, Item, Cap> Iterator for Query<'a, PU, Item, Cap>
+impl<'a, PU, A, Item, Cap> Iterator for Query<'a, PU, A, Item, Cap>
 where
     Cap: Capacity,
     PU: Coordinate,
+    A: Area<PU>
 {
     type Item = &'a Item;
 
@@ -53,7 +56,7 @@ where
         while self.items.map(|items| !items.is_empty()).unwrap_or_default() {
             let item = &self.items.unwrap()[0];
             self.items = self.items.map(|i| &i[1..]);
-            if self.boundary.contains(&item.0) {
+            if self.area.contains(&item.0) {
                 return Some(&item.1);
             }
         }
