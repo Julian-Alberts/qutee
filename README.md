@@ -1,5 +1,9 @@
 # Qutee
 
+![Crates.io](https://img.shields.io/crates/v/qutee?style=for-the-badge)
+![Crates.io](https://img.shields.io/crates/l/qutee?style=for-the-badge)
+![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/Julian-Alberts/qutee/rust-test.yml?branch=main&label=Tests&style=for-the-badge)
+
 Qutee is a simple implementation of a quadtree.
 Qutee allows you to choose which primitive number type should be used for coordinates.
 Items of the quadtree do not require any trait bounds.
