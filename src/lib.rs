@@ -203,6 +203,11 @@ where
     pub fn insert(&mut self, item: Item) -> Result<(), QuadTreeError<C>> {
         self.insert_at(item.as_point(), item)
     }
+
+    /// Same as `insert` except that no bounds check is performed.
+    pub fn insert_unchecked(&mut self, item: Item) {
+        self.insert_at_unchecked(item.as_point(), item)
+    }
 }
 
 impl<C, Item> QuadTree<C, Item, DynCap>
