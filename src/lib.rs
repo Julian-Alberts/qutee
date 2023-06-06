@@ -128,8 +128,9 @@ where
         Ok(())
     }
 
+    /// Same as `insert_at` except that no bounds check is performed.
     #[inline]
-    fn insert_at_unchecked(&mut self, point: Point<C>, value: Item) {
+    pub fn insert_at_unchecked(&mut self, point: Point<C>, value: Item) {
         let mut sub_tree = self;
         loop {
             if sub_tree.items.as_ref().map(|i| i.len()).unwrap_or_default()
