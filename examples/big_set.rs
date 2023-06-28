@@ -1,6 +1,6 @@
 use qutee::{AsPoint, Boundary, ConstCap, QuadTree};
 
-const RAW_DATA: &str = include_str!("test.csv");
+const RAW_DATA: &str = include_str!("../benches/100_000.csv");
 
 pub struct QuadTreeEntry {
     x: usize,
