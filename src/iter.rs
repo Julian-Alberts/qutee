@@ -8,7 +8,7 @@ where
     A: Area<PU>,
 {
     iter: InternQuery<'a, PU, A, Item, Cap>,
-    area: A
+    area: A,
 }
 
 struct InternQuery<'a, PU, A, Item, Cap>
@@ -35,7 +35,7 @@ where
                 items: tree.items.as_deref(),
                 quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
                 current_sub_query: None,
-                area: std::ptr::null()
+                area: std::ptr::null(),
             },
             area,
         };
@@ -70,12 +70,15 @@ where
         while !quadrants.is_empty() {
             let q = &quadrants[0];
             *quadrants = &quadrants[1..];
-            if unsafe {self.area.as_ref()}.unwrap().intersects(&q.boundary) {
+            if unsafe { self.area.as_ref() }
+                .unwrap()
+                .intersects(&q.boundary)
+            {
                 return Some(Box::new(InternQuery {
                     items: q.items.as_deref(),
                     quadrants: q.quadrants.as_ref().map(|q| q.as_slice()),
                     current_sub_query: None,
-                    area: self.area
+                    area: self.area,
                 }));
             }
         }
@@ -99,7 +102,7 @@ where
         {
             let item = &self.items.unwrap()[0];
             self.items = self.items.map(|i| &i[1..]);
-            if unsafe{ self.area.as_ref().unwrap().contains(&item.0) } {
+            if unsafe { self.area.as_ref().unwrap().contains(&item.0) } {
                 return Some(&item.1);
             }
         }

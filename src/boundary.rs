@@ -106,19 +106,11 @@ where
     C: Coordinate,
 {
     fn contains(&self, point: &Point<C>) -> bool {
-        ((point.x < self.p1.x) as usize
-            + (point.x > self.p2.x) as usize
-            + (point.y < self.p1.y) as usize
-            + (point.y > self.p2.y) as usize)
-            == 0
+        !(point.x < self.p1.x || point.x > self.p2.x || point.y < self.p1.y || point.y > self.p2.y)
     }
 
     fn intersects(&self, Boundary { p1, p2 }: &Boundary<C>) -> bool {
-        ((p2.x < self.p1.x) as usize
-            + (p1.x > self.p2.x) as usize
-            + (p2.y < self.p1.y) as usize
-            + (p1.y > self.p2.y) as usize)
-            == 0
+        !(p2.x < self.p1.x || p1.x > self.p2.x || p2.y < self.p1.y || p1.y > self.p2.y)
     }
 }
 
