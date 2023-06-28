@@ -114,7 +114,6 @@ where
     /// Insert new item into the quad tree.
     /// # Errors
     /// Returns an error if the point is out of bounds.
-    #[inline]
     pub fn insert_at(
         &mut self,
         point: impl Into<Point<C>>,
@@ -129,7 +128,6 @@ where
     }
 
     /// Same as `insert_at` except that no bounds check is performed.
-    #[inline]
     pub fn insert_at_unchecked(&mut self, point: Point<C>, value: Item) {
         let mut sub_tree = self;
         loop {
@@ -200,7 +198,6 @@ where
     ///     y: 5,
     /// }).is_ok());
     /// ```
-    #[inline]
     pub fn insert(&mut self, item: Item) -> Result<(), QuadTreeError<C>> {
         self.insert_at(item.as_point(), item)
     }

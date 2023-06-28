@@ -15,4 +15,9 @@ repository = "https://github.com/Julian-Alberts/qutee"
 num-traits = "0.2"
 
 [dev-dependencies]
+criterion = { version = "0.5.1", features = ["html_reports"] }
 test-case = "3.0"
+
+[[bench]]
+name = "my_benchmark"
+harness = false
