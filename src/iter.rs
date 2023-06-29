@@ -64,9 +64,7 @@ where
 {
     fn find_next_quadrant(&mut self) -> Option<Box<InternQuery<'a, PU, A, Item, Cap>>> {
         let quadrants = self.quadrants.as_mut()?;
-        if quadrants.is_empty() {
-            return None;
-        }
+
         while !quadrants.is_empty() {
             let q = &quadrants[0];
             *quadrants = &quadrants[1..];
