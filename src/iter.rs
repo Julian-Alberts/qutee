@@ -8,7 +8,7 @@ where
     A: Area<PU>,
 {
     area: A,
-    stack: Vec<InternQuery<'a, PU, Item, Cap>>
+    stack: Vec<InternQuery<'a, PU, Item, Cap>>,
 }
 
 struct InternQuery<'a, PU, Item, Cap>
@@ -42,8 +42,7 @@ where
 {
     type Item = &'a Item;
     fn next(&mut self) -> Option<Self::Item> {
-        'main:
-        loop {
+        'main: loop {
             let mut ctx = self.stack.last_mut()?;
             if let Some(quads) = &mut ctx.quadrants {
                 while !quads.is_empty() {
@@ -52,7 +51,6 @@ where
                     if self.area.intersects(&quad.boundary) {
                         let int_query = InternQuery::new(quad);
                         self.stack.push(int_query);
-                        ctx = self.stack.last_mut().unwrap();
                         continue 'main;
                     }
                 }
@@ -64,7 +62,7 @@ where
                     let item = &items[0];
                     *items = &items[1..];
                     if self.area.contains(&item.0) {
-                        return Some(&item.1)
+                        return Some(&item.1);
                     }
                 }
                 ctx.quadrants = None;
@@ -75,8 +73,11 @@ where
     }
 }
 
-impl <'a, C, Item, Cap> InternQuery<'a, C, Item, Cap>
-where C: Coordinate, Cap: Capacity {
+impl<'a, C, Item, Cap> InternQuery<'a, C, Item, Cap>
+where
+    C: Coordinate,
+    Cap: Capacity,
+{
     #[inline(always)]
     fn new(tree: &'a QuadTree<C, Item, Cap>) -> Self {
         Self {
