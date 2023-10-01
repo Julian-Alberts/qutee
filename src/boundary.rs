@@ -8,6 +8,8 @@ pub trait Area<C: Coordinate>: Clone {
     fn contains(&self, point: &Point<C>) -> bool;
     /// Checks if this shape and a given boundary intersect at any point
     fn intersects(&self, boundary: &Boundary<C>) -> bool;
+    /// Checks if this area fully encloses a given boundary
+    fn encloses(&self, boundary: &Boundary<C>) -> bool;
 }
 
 /// A rectangular area
@@ -111,6 +113,10 @@ where
 
     fn intersects(&self, Boundary { p1, p2 }: &Boundary<C>) -> bool {
         !(p2.x < self.p1.x || p1.x > self.p2.x || p2.y < self.p1.y || p1.y > self.p2.y)
+    }
+
+    fn encloses(&self, boundary: &Boundary<C>) -> bool {
+        self.contains(&boundary.p1) && self.contains(&boundary.p2)
     }
 }
 

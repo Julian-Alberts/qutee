@@ -16,6 +16,7 @@ where
     Cap: Capacity,
     PU: Coordinate,
 {
+    is_enclosed_by_area: bool,
     quadrants: Option<&'a [QuadTree<PU, Item, Cap>]>,
     items: Option<&'a [(Point<PU>, Item)]>,
 }
@@ -28,7 +29,7 @@ where
 {
     pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>, area: A) -> Self {
         Self {
-            stack: vec![InternQuery::new(tree)],
+            stack: vec![InternQuery::new(tree, false, &area)],
             area,
         }
     }
@@ -48,8 +49,8 @@ where
                 while !quads.is_empty() {
                     let quad = &quads[0];
                     *quads = &quads[1..];
-                    if self.area.intersects(&quad.boundary) {
-                        let int_query = InternQuery::new(quad);
+                    if ctx.is_enclosed_by_area || self.area.intersects(&quad.boundary) {
+                        let int_query = InternQuery::new(quad,ctx.is_enclosed_by_area, &self.area);
                         self.stack.push(int_query);
                         continue 'main;
                     }
@@ -61,7 +62,7 @@ where
                 while !items.is_empty() {
                     let item = &items[0];
                     *items = &items[1..];
-                    if self.area.contains(&item.0) {
+                    if ctx.is_enclosed_by_area || self.area.contains(&item.0) {
                         return Some(&item.1);
                     }
                 }
@@ -79,8 +80,9 @@ where
     Cap: Capacity,
 {
     #[inline(always)]
-    fn new(tree: &'a QuadTree<C, Item, Cap>) -> Self {
+    fn new<A: Area<C>>(tree: &'a QuadTree<C, Item, Cap>, parent_is_enclosed_by_area: bool, area: &A) -> Self {
         Self {
+            is_enclosed_by_area: parent_is_enclosed_by_area || area.encloses(&tree.boundary),
             items: tree.items.as_deref(),
             quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
         }
