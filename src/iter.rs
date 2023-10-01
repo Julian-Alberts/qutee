@@ -50,7 +50,7 @@ where
                     let quad = &quads[0];
                     *quads = &quads[1..];
                     if ctx.is_enclosed_by_area || self.area.intersects(&quad.boundary) {
-                        let int_query = InternQuery::new(quad,ctx.is_enclosed_by_area, &self.area);
+                        let int_query = InternQuery::new(quad, ctx.is_enclosed_by_area, &self.area);
                         self.stack.push(int_query);
                         continue 'main;
                     }
@@ -80,7 +80,11 @@ where
     Cap: Capacity,
 {
     #[inline(always)]
-    fn new<A: Area<C>>(tree: &'a QuadTree<C, Item, Cap>, parent_is_enclosed_by_area: bool, area: &A) -> Self {
+    fn new<A: Area<C>>(
+        tree: &'a QuadTree<C, Item, Cap>,
+        parent_is_enclosed_by_area: bool,
+        area: &A,
+    ) -> Self {
         Self {
             is_enclosed_by_area: parent_is_enclosed_by_area || area.encloses(&tree.boundary),
             items: tree.items.as_deref(),
