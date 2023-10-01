@@ -44,7 +44,7 @@ where
     type Item = &'a Item;
     fn next(&mut self) -> Option<Self::Item> {
         'main: loop {
-            let mut ctx = self.stack.last_mut()?;
+            let ctx = self.stack.last_mut()?;
             if let Some(quads) = &mut ctx.quadrants {
                 while !quads.is_empty() {
                     let quad = &quads[0];
