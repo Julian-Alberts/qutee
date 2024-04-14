@@ -175,6 +175,11 @@ where
         &self.boundary
     }
 
+    /// Returns the capacity
+    pub fn capacity(&self) -> usize {
+        self.capacity.capacity()
+    }
+
 }
 
 impl<C, Item, Cap> QuadTree<C, Item, Cap>
