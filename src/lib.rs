@@ -169,6 +169,12 @@ where
     pub fn iter(&self) -> Iter<'_, C, Item, Cap> {
         Iter::new(self)
     }
+
+    /// Returns the boundary of this QuadTree
+    pub fn boundary(&self) -> &Boundary<C> {
+        &self.boundary
+    }
+
 }
 
 impl<C, Item, Cap> QuadTree<C, Item, Cap>
