@@ -70,6 +70,36 @@ where
         }
     }
 
+    // Returns the left border (the smaller x value given at creation)
+    pub fn left_border(&self) -> C {
+        self.p1.x
+    }
+
+    // Returns the right border (the bigger x value given at creation)
+    pub fn right_border(&self) -> C {
+        self.p2.x
+    }
+
+    // Returns the top border (the smaller y value given at creation)
+    pub fn top_border(&self) -> C {
+        self.p1.y
+    }
+
+    // Returns the bottom border (the bigger y value given at creation)
+    pub fn bottom_border(&self) -> C {
+        self.p2.y
+    }
+
+    // Returns the width
+    pub fn width(&self) -> C {
+        self.right_border() - self.left_border()
+    }
+
+    // Returns the height
+    pub fn height(&self) -> C {
+        self.top_border() - self.bottom_border()
+    }
+
     pub(crate) fn split(&self) -> [Boundary<C>; 4] {
         let dx = self.p2.x - self.p1.x;
         let dy = self.p2.y - self.p1.y;
@@ -235,5 +265,29 @@ mod tests {
                 p2: (32766, 32766).into(),
             }
         );
+    }
+
+    #[test_case((1,2), (10,20) => 1;"0")]
+    #[test_case((-1,-2), (10,20) => -1;"1")]
+    fn left_border(p1: impl Into<Point<i32>>, p2: impl Into<Point<i32>>) -> i32 {
+        Boundary::between_points(p1, p2).left_border()
+    }
+
+    #[test_case((1,2), (10,20) => 10;"0")]
+    #[test_case((-1,-2), (20,20) => 20;"1")]
+    fn right_border(p1: impl Into<Point<i32>>, p2: impl Into<Point<i32>>) -> i32 {
+        Boundary::between_points(p1, p2).right_border()
+    }
+
+    #[test_case((1,2), (10,20) => 2;"0")]
+    #[test_case((-1,-2), (10,20) => -2;"1")]
+    fn top_border(p1: impl Into<Point<i32>>, p2: impl Into<Point<i32>>) -> i32 {
+        Boundary::between_points(p1, p2).top_border()
+    }
+
+    #[test_case((1,2), (20,10) => 10;"0")]
+    #[test_case((-1,-2), (10,20) => 20;"1")]
+    fn bottom_border(p1: impl Into<Point<i32>>, p2: impl Into<Point<i32>>) -> i32 {
+        Boundary::between_points(p1, p2).bottom_border()
     }
 }
