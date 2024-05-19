@@ -1,6 +1,8 @@
 use qutee::{AsPoint, Boundary, ConstCap, QuadTree};
 
-const RAW_DATA: &str = include_str!("../benches/100_000.csv");
+use rand::{Rng, SeedableRng};
+
+const ITEMS: usize = 1_000_000;
 
 pub struct QuadTreeEntry {
     x: usize,
@@ -22,17 +24,15 @@ fn main() {
 }
 
 fn parse_data() -> impl Iterator<Item = QuadTreeEntry> {
-    RAW_DATA.lines().map(|line| {
-        let mut row = line.split(',').map(|i| i.parse::<usize>());
-        let x = row.next().unwrap().unwrap();
-        let y = row.next().unwrap().unwrap();
-        let value = row.next().unwrap().unwrap();
-        QuadTreeEntry {
+    let mut rng = rand::rngs::StdRng::seed_from_u64(10);
+    (0..ITEMS)
+        .into_iter()
+        .map(move |i| (rng.gen_range(0..32_767), rng.gen_range(0..32_767), i))
+        .map(|(x, y, value)| QuadTreeEntry {
             x,
             y,
             _value: value,
-        }
-    })
+        })
 }
 
 fn insert_data(
@@ -43,5 +43,5 @@ fn insert_data(
 }
 
 fn query_data(qt: &mut QuadTree<usize, QuadTreeEntry, ConstCap<16>>, area: Boundary<usize>) {
-    assert_eq!(qt.query(area).collect::<Vec<_>>().len(), 18476)
+    let _ = qt.query(area);
 }

@@ -1,7 +1,8 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use qutee::{AsPoint, Boundary, ConstCap, QuadTree};
+use rand::{Rng as _, SeedableRng as _};
 
-const RAW_DATA: &str = include_str!("100_000.csv");
+const ITEMS: usize = 1_000_000;
 
 pub struct QuadTreeEntry {
     x: usize,
@@ -16,24 +17,22 @@ impl AsPoint<usize> for &QuadTreeEntry {
 }
 
 fn parse_data() -> impl Iterator<Item = QuadTreeEntry> {
-    RAW_DATA.lines().map(|line| {
-        let mut row = line.split(',').map(|i| i.parse::<usize>());
-        let x = row.next().unwrap().unwrap();
-        let y = row.next().unwrap().unwrap();
-        let value = row.next().unwrap().unwrap();
-        QuadTreeEntry {
+    let mut rng = rand::rngs::StdRng::seed_from_u64(10);
+    (0..ITEMS)
+        .into_iter()
+        .map(move |i| (rng.gen_range(0..32_767), rng.gen_range(0..32_767), i))
+        .map(|(x, y, value)| QuadTreeEntry {
             x,
             y,
             _value: value,
-        }
-    })
+        })
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
     let data = parse_data().collect::<Vec<_>>();
 
     let mut group = c.benchmark_group("insert");
-    for i in [100, 1_000, 10_000, 100_000] {
+    for i in [1_000, 10_000, 100_000, 1_000_000] {
         group.throughput(criterion::Throughput::Elements(i));
         group.bench_with_input(
             BenchmarkId::from_parameter(format!("{} Elements", i)),
@@ -51,7 +50,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     group.finish();
 
     let mut group = c.benchmark_group("insert_unchecked");
-    for i in [100, 1_000, 10_000, 100_000] {
+    for i in [1_000, 10_000, 100_000, 1_000_000] {
         group.throughput(criterion::Throughput::Elements(i));
         group.bench_with_input(
             BenchmarkId::from_parameter(format!("{} Elements", i)),
