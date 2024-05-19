@@ -70,32 +70,32 @@ where
         }
     }
 
-    // Returns the left border (the smaller x value given at creation)
+    /// Returns the left border (the smaller x value given at creation)
     pub fn left_border(&self) -> C {
         self.p1.x
     }
 
-    // Returns the right border (the bigger x value given at creation)
+    /// Returns the right border (the bigger x value given at creation)
     pub fn right_border(&self) -> C {
         self.p2.x
     }
 
-    // Returns the top border (the smaller y value given at creation)
+    /// Returns the top border (the smaller y value given at creation)
     pub fn top_border(&self) -> C {
         self.p1.y
     }
 
-    // Returns the bottom border (the bigger y value given at creation)
+    /// Returns the bottom border (the bigger y value given at creation)
     pub fn bottom_border(&self) -> C {
         self.p2.y
     }
 
-    // Returns the width
+    /// Returns the width
     pub fn width(&self) -> C {
         self.right_border() - self.left_border()
     }
 
-    // Returns the height
+    /// Returns the height
     pub fn height(&self) -> C {
         self.top_border() - self.bottom_border()
     }
