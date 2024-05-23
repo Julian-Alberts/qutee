@@ -107,7 +107,7 @@ where
         let half_dx = dx / two;
         let half_dy = dy / two;
         [
-            Boundary::new(self.p1.clone(), half_dx, half_dy),
+            Boundary::new(self.p1, half_dx, half_dy),
             Boundary::between_points_unchecked(
                 (self.p1.x + half_dx, self.p1.y),
                 (self.p2.x, self.p1.y + half_dy),
@@ -116,10 +116,7 @@ where
                 (self.p1.x, self.p1.y + half_dy),
                 (self.p1.x + half_dx, self.p2.y),
             ),
-            Boundary::between_points_unchecked(
-                (self.p1.x + half_dx, self.p1.y + half_dy),
-                self.p2.clone(),
-            ),
+            Boundary::between_points_unchecked((self.p1.x + half_dx, self.p1.y + half_dy), self.p2),
         ]
     }
 
