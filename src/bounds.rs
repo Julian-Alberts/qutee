@@ -3,7 +3,7 @@ pub trait Capacity: Clone + Copy {
 }
 
 /// A Capacity known at compile time
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub struct ConstCap<const CAP: usize>;
 impl<const CAP: usize> Capacity for ConstCap<CAP> {
     #[inline]
@@ -13,7 +13,7 @@ impl<const CAP: usize> Capacity for ConstCap<CAP> {
 }
 
 /// A Capacity known at runtime
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub struct DynCap(pub(super) usize);
 impl Capacity for DynCap {
     #[inline]

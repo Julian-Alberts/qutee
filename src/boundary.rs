@@ -13,7 +13,7 @@ pub trait Area<C: Coordinate>: Clone {
 }
 
 /// A rectangular area
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Boundary<C>
 where
     C: Coordinate,

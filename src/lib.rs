@@ -44,7 +44,7 @@ pub use iter::*;
 /// C: The type used for coordinates
 /// Item: The type to be saved
 /// CAP: The maximum capacity of each level
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct QuadTree<C, Item, Cap = DynCap>
 where
     C: Coordinate,
@@ -56,7 +56,7 @@ where
 }
 
 /// Possible errors
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq, Clone)]
 pub enum QuadTreeError<C>
 where
     C: Coordinate,
@@ -75,7 +75,7 @@ where
 }
 
 /// A point in two dimensional space
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Point<C>
 where
     C: Coordinate,
@@ -179,7 +179,6 @@ where
     pub fn capacity(&self) -> usize {
         self.capacity.capacity()
     }
-
 }
 
 impl<C, Item, Cap> QuadTree<C, Item, Cap>
