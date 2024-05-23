@@ -15,7 +15,7 @@ A boundary can be constructed with `Boundary::new` or `Boundary::between_points`
 
 ## Point
 A point in 2D space.
-A point can be constructed with `Point::new`. This function takes an `x` and `y' argument.
+A point can be constructed with `Point::new`. This function takes an `x` and `y` argument.
 Most functions do not directly require a `Point` but take `impl Into<Point>` as an argument.
 This allows for a tuple to be used as a point where the first item is `x` and the second `y'.
 
