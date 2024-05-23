@@ -1,6 +1,7 @@
 use crate::{bounds::Capacity, Area, Coordinate, Point, QuadTree};
 
 /// Query Iterator over items and their coordinates
+#[derive(Clone)]
 pub struct QueryPoints<'a, PU, A, Item, Cap>
 where
     Cap: Capacity,
@@ -11,6 +12,7 @@ where
     stack: Vec<InternQuery<'a, PU, Item, Cap>>,
 }
 
+#[derive(Clone)]
 struct InternQuery<'a, PU, Item, Cap>
 where
     Cap: Capacity,
@@ -94,6 +96,7 @@ where
 }
 
 /// Iterator over all items and their coordinates
+#[derive(Clone)]
 pub struct IterPoints<'a, PU, Item, Cap>
 where
     Cap: Capacity,
@@ -159,6 +162,7 @@ where
 }
 
 /// Query Iterator
+#[derive(Clone)]
 #[repr(transparent)]
 pub struct Query<'a, PU, A, Item, Cap>(QueryPoints<'a, PU, A, Item, Cap>)
 where
@@ -190,6 +194,7 @@ where
 }
 
 /// Iterator over all items
+#[derive(Clone)]
 #[repr(transparent)]
 pub struct Iter<'a, PU, Item, Cap>(IterPoints<'a, PU, Item, Cap>)
 where
