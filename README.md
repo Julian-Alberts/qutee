@@ -15,7 +15,7 @@ A boundary can be constructed with `Boundary::new` or `Boundary::between_points`
 
 ## Point
 A point in 2D space.
-A point can be constructed with `Point::new`. This function takes an `x` and `y' argument.
+A point can be constructed with `Point::new`. This function takes an `x` and `y` argument.
 Most functions do not directly require a `Point` but take `impl Into<Point>` as an argument.
 This allows for a tuple to be used as a point where the first item is `x` and the second `y'.
 
@@ -28,7 +28,7 @@ By default, this argument is set to `DynCapacity`. You can change this to `Const
 To create a `QuadTree` you can use one of three methods
 1. new_with_capacity takes a `Boundary` and parameter of type `Capacity`.
 2. new_with_dyn_cap takes a `Boundary` and a capacity of type usize. This function is only available if the capacity is dynamic.
-3. new_with_dyn_cap takes a `Boundary`. This function is only available if the capacity is known at compile time.
+3. new_with_const_cap takes a `Boundary`. This function is only available if the capacity is known at compile time.
 
 ### Insert
 An item can be inserted using the `insert` function. This function requires for item to implement `AsPoint`.
