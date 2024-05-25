@@ -165,6 +165,14 @@ where
         Query::new(self, area)
     }
 
+    /// Get all items in a given area and their coordinates..
+    pub fn query_points<A>(&self, area: A) -> QueryPoints<'_, C, A, Item, Cap>
+    where
+        A: Area<C>,
+    {
+        QueryPoints::new(self, area)
+    }
+
     /// Get an iterator over all items.
     pub fn iter(&self) -> Iter<'_, C, Item, Cap> {
         Iter::new(self)
