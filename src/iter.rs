@@ -150,7 +150,7 @@ where
         Self {
             stack: vec![IterStackItem {
                 quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
-                items: tree.items.as_ref().map(|items| items.as_slice()),
+                items: tree.items.as_deref(),
             }],
         }
     }
@@ -212,7 +212,7 @@ where
                 *quadrants = &quadrants[1..];
                 stack.push(IterStackItem {
                     quadrants: quad.quadrants.as_ref().map(|q| q.as_slice()),
-                    items: quad.items.as_ref().map(Vec::as_slice),
+                    items: quad.items.as_deref(),
                 });
             } else {
                 ctx.quadrants = None;
@@ -299,7 +299,7 @@ where
 {
     #[inline]
     fn from_iter_type(t: &(Point<C>, Item)) -> &Self {
-        &t
+        t
     }
 }
 

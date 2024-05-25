@@ -121,7 +121,7 @@ where
     ) -> Result<(), QuadTreeError<C>> {
         let point = point.into();
         if !self.boundary.contains(&point) {
-            return Err(QuadTreeError::OutOfBounds(self.boundary.clone(), point));
+            return Err(QuadTreeError::OutOfBounds(self.boundary, point));
         }
         self.insert_at_unchecked(point, value);
         Ok(())
