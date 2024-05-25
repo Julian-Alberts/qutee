@@ -170,6 +170,11 @@ where
         Iter::new(self)
     }
 
+    /// Get an iterator over all items and their coordinates.
+    pub fn iter_points(&self) -> IterPoints<'_, C, Item, Cap> {
+        IterPoints::new(self)
+    }
+
     /// Returns the boundary of this QuadTree
     pub fn boundary(&self) -> &Boundary<C> {
         &self.boundary
