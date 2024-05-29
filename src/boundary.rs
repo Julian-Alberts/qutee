@@ -37,6 +37,10 @@ pub trait Coordinate:
 {
 }
 
+impl <T> Coordinate for T where T: num_traits::NumOps + Sized + Clone + Copy + num_traits::NumCast + PartialOrd + Debug
+{
+}
+
 impl<C> Boundary<C>
 where
     C: Coordinate,
@@ -146,21 +150,6 @@ where
         self.contains(&boundary.p1) && self.contains(&boundary.p2)
     }
 }
-
-impl Coordinate for usize {}
-impl Coordinate for isize {}
-impl Coordinate for u8 {}
-impl Coordinate for u16 {}
-impl Coordinate for u32 {}
-impl Coordinate for u64 {}
-impl Coordinate for u128 {}
-impl Coordinate for i8 {}
-impl Coordinate for i16 {}
-impl Coordinate for i32 {}
-impl Coordinate for i64 {}
-impl Coordinate for i128 {}
-impl Coordinate for f32 {}
-impl Coordinate for f64 {}
 
 #[cfg(test)]
 mod tests {
