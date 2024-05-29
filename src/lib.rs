@@ -90,7 +90,16 @@ impl<T> Point<T>
 where
     T: Coordinate,
 {
-    /// Create a new point
+    /// Create a new point at a given x and y
+    /// # Example
+    /// ```
+    /// use qutee::*;
+    /// let x = 10;
+    /// let y = 12;
+    /// let p = Point::new(x,y);
+    /// assert_eq!(p.x, x);
+    /// assert_eq!(p.y, y);
+    /// ```
     pub fn new(x: T, y: T) -> Self {
         Self { x, y }
     }
@@ -102,6 +111,13 @@ where
     C: Coordinate,
 {
     /// Create a new quad tree for a given area where each level of the tree has a given capacity.
+    /// # Example
+    /// ```
+    /// use qutee::*;
+    /// struct MyItem;
+    /// let tree = QuadTree::<_, MyItem, DynCap>::new_with_capacity(Boundary::between_points((10,10), (20,20)), DynCap::new(20));
+    /// assert_eq!(tree.capacity(), 20);
+    /// ```
     pub fn new_with_capacity(boundary: Boundary<C>, capacity: Cap) -> Self {
         Self {
             boundary,
@@ -114,6 +130,13 @@ where
     /// Insert new item into the quad tree.
     /// # Errors
     /// Returns an error if the point is out of bounds.
+    /// # Example
+    /// ```
+    /// use qutee::*;
+    /// let mut tree = QuadTree::<_,_,ConstCap<2>>::new_with_const_cap(Boundary::between_points((0,0), (10,10)));
+    /// assert!(tree.insert_at((5,5), ()).is_ok());
+    /// assert!(tree.insert_at((11,11), ()).is_err());
+    /// ```
     pub fn insert_at(
         &mut self,
         point: impl Into<Point<C>>,
@@ -128,8 +151,16 @@ where
     }
 
     /// Same as `insert_at` except that no bounds check is performed.
-    pub fn insert_at_unchecked(&mut self, point: Point<C>, value: Item) {
+    /// # Example
+    /// ```
+    /// use qutee::*;
+    /// let mut tree = QuadTree::<_,_,ConstCap<2>>::new_with_const_cap(Boundary::between_points((0,0), (10,10)));
+    /// tree.insert_at_unchecked((5,5), ());
+    /// assert_eq!(tree.iter().count(), 1);
+    /// ```
+    pub fn insert_at_unchecked(&mut self, point: impl Into<Point<C>>, value: Item) {
         let mut sub_tree = self;
+        let point = point.into();
         loop {
             if sub_tree.items.as_ref().map(|i| i.len()).unwrap_or_default()
                 < sub_tree.capacity.capacity()
@@ -158,6 +189,18 @@ where
     }
 
     /// Get all items in a given area.
+    /// # Example
+    /// ```
+    /// use qutee::*;
+    /// let mut tree = QuadTree::<_,_,ConstCap<2>>::new_with_const_cap(Boundary::between_points((0,0), (10,10)));
+    /// tree.insert_at((3,5), 1);
+    /// tree.insert_at((1,0), 2);
+    /// tree.insert_at((7,3), 4);
+    /// tree.insert_at((9,4), 5);
+    /// let mut res = tree.query(Boundary::between_points((2,1), (8,9))).copied().collect::<Vec<_>>();
+    /// res.sort();
+    /// assert_eq!(res, vec![1,4]);
+    /// ```
     pub fn query<A>(&self, area: A) -> Query<'_, C, A, Item, Cap>
     where
         A: Area<C>,
@@ -165,7 +208,22 @@ where
         Query::new(self, area)
     }
 
-    /// Get all items in a given area and their coordinates..
+    /// Get all items in a given area and their coordinates.
+    /// # Example
+    /// ```
+    /// use qutee::*;
+    /// let mut tree = QuadTree::<_,_,ConstCap<2>>::new_with_const_cap(Boundary::between_points((0,0), (10,10)));
+    /// tree.insert_at((3,5), 1);
+    /// tree.insert_at((1,0), 2);
+    /// tree.insert_at((7,3), 4);
+    /// tree.insert_at((9,4), 5);
+    /// let mut res = tree.query_points(Boundary::between_points((2,1), (8,9))).copied().collect::<Vec<_>>();
+    /// res.sort_by(|a,b| a.1.cmp(&b.1));
+    /// assert_eq!(res, vec![
+    ///     ((3,5).into(), 1),
+    ///     ((7,3).into(), 4),
+    /// ]);
+    /// ```
     pub fn query_points<A>(&self, area: A) -> QueryPoints<'_, C, A, Item, Cap>
     where
         A: Area<C>,
