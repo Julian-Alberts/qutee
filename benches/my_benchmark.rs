@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use qutee::{AsPoint, Boundary, ConstCap, QuadTree};
+use qutee::{AsPoint, Boundary, QuadTree};
 use rand::{Rng as _, SeedableRng as _};
 
 const ITEMS: usize = 1_000_000;
@@ -39,9 +39,8 @@ fn criterion_benchmark(c: &mut Criterion) {
             &data[0..i as usize],
             |b, d| {
                 b.iter(|| {
-                    let mut tree: QuadTree<_, _, ConstCap<16>> = QuadTree::new_with_const_cap(
-                        Boundary::between_points((0, 0), (32_767, 32_767)),
-                    );
+                    let mut tree: QuadTree<_, _, 16> =
+                        QuadTree::new(Boundary::between_points((0, 0), (32_767, 32_767)));
                     d.iter().for_each(|item| tree.insert(item).unwrap())
                 });
             },
@@ -57,9 +56,8 @@ fn criterion_benchmark(c: &mut Criterion) {
             &data[0..i as usize],
             |b, d| {
                 b.iter(|| {
-                    let mut tree: QuadTree<_, _, ConstCap<16>> = QuadTree::new_with_const_cap(
-                        Boundary::between_points((0, 0), (32_767, 32_767)),
-                    );
+                    let mut tree: QuadTree<_, _, 16> =
+                        QuadTree::new(Boundary::between_points((0, 0), (32_767, 32_767)));
                     d.iter().for_each(|item| tree.insert_unchecked(item))
                 });
             },
@@ -67,8 +65,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     }
     group.finish();
 
-    let mut tree: QuadTree<_, _, ConstCap<16>> =
-        QuadTree::new_with_const_cap(Boundary::between_points((0, 0), (32_767, 32_767)));
+    let mut tree: QuadTree<_, _, 16> =
+        QuadTree::new(Boundary::between_points((0, 0), (32_767, 32_767)));
     data.iter().for_each(|item| tree.insert(item).unwrap());
     let mut group = c.benchmark_group("query");
     for i in [

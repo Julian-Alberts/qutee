@@ -132,7 +132,7 @@ where
     fn new(tree: &'a QuadTree<C, Item, CAP>) -> Self {
         Self {
             stack: vec![IterStackItem {
-                quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
+                quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()).unwrap_or(&[]),
                 items: &tree.items[..tree.next_item_index],
             }],
         }
@@ -144,7 +144,7 @@ struct IterStackItem<'a, C, Item, const CAP: usize>
 where
     C: Coordinate,
 {
-    quadrants: Option<&'a [QuadTree<C, Item, CAP>]>,
+    quadrants: &'a [QuadTree<C, Item, CAP>],
     items: &'a [(Point<C>, Item)],
 }
 
@@ -183,18 +183,17 @@ where
             return Some(RetItem::from_iter_type(item));
         }
 
-        if let Some(quadrants) = &mut ctx.quadrants {
-            if !quadrants.is_empty() {
-                let quad = &quadrants[0];
-                *quadrants = &quadrants[1..];
-                stack.push(IterStackItem {
-                    quadrants: quad.quadrants.as_ref().map(|q| q.as_slice()),
-                    items: &quad.items[..quad.next_item_index],
-                });
-            } else {
-                ctx.quadrants = None;
-                stack.pop();
-            }
+        if !ctx.quadrants.is_empty() {
+            let quad = &ctx.quadrants[0];
+            ctx.quadrants = &ctx.quadrants[1..];
+            stack.push(IterStackItem {
+                quadrants: quad
+                    .quadrants
+                    .as_ref()
+                    .map(|q| q.as_slice())
+                    .unwrap_or_default(),
+                items: &quad.items[..quad.next_item_index],
+            });
         } else {
             stack.pop();
         }
