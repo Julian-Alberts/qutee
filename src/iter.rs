@@ -36,8 +36,8 @@ where
     PU: Coordinate,
 {
     is_enclosed_by_area: bool,
-    quadrants: Option<&'a [QuadTree<PU, Item, CAP>]>,
-    items: Option<&'a [(Point<PU>, Item)]>,
+    quadrants: &'a [QuadTree<PU, Item, CAP>],
+    items: &'a [(Point<PU>, Item)],
 }
 
 impl<'a, PU, Item, const CAP: usize, A> QueryPoints<'a, PU, A, Item, CAP>
@@ -71,28 +71,22 @@ where
 {
     'main: loop {
         let ctx = stack.last_mut()?;
-        if let Some(quads) = &mut ctx.quadrants {
-            while !quads.is_empty() {
-                let quad = &quads[0];
-                *quads = &quads[1..];
-                if ctx.is_enclosed_by_area || area.intersects(&quad.boundary) {
-                    let int_query = QueryStackItem::new(quad, ctx.is_enclosed_by_area, area);
-                    stack.push(int_query);
-                    continue 'main;
-                }
+        while !ctx.quadrants.is_empty() {
+            let quad = &ctx.quadrants[0];
+            ctx.quadrants = &ctx.quadrants[1..];
+            if ctx.is_enclosed_by_area || area.intersects(&quad.boundary) {
+                let int_query = QueryStackItem::new(quad, ctx.is_enclosed_by_area, area);
+                stack.push(int_query);
+                continue 'main;
             }
-            ctx.quadrants = None
         }
 
-        if let Some(items) = &mut ctx.items {
-            while !items.is_empty() {
-                let item = &items[0];
-                *items = &items[1..];
-                if ctx.is_enclosed_by_area || area.contains(&item.0) {
-                    return Some(RetItem::from_iter_type(item));
-                }
+        while !ctx.items.is_empty() {
+            let item = &ctx.items[0];
+            ctx.items = &ctx.items[1..];
+            if ctx.is_enclosed_by_area || area.contains(&item.0) {
+                return Some(RetItem::from_iter_type(item));
             }
-            ctx.quadrants = None;
         }
 
         stack.pop();
@@ -111,8 +105,8 @@ where
     ) -> Self {
         Self {
             is_enclosed_by_area: parent_is_enclosed_by_area || area.encloses(&tree.boundary),
-            items: tree.items.as_deref(),
-            quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
+            items: &tree.items[..tree.next_item_index],
+            quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()).unwrap_or(&[]),
         }
     }
 }
@@ -139,7 +133,7 @@ where
         Self {
             stack: vec![IterStackItem {
                 quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
-                items: tree.items.as_deref(),
+                items: &tree.items[..tree.next_item_index],
             }],
         }
     }
@@ -151,7 +145,7 @@ where
     C: Coordinate,
 {
     quadrants: Option<&'a [QuadTree<C, Item, CAP>]>,
-    items: Option<&'a [(Point<C>, Item)]>,
+    items: &'a [(Point<C>, Item)],
 }
 
 impl<'a, PU, Item, const CAP: usize> IterPoints<'a, PU, Item, CAP>
@@ -183,13 +177,10 @@ where
 {
     loop {
         let ctx = stack.last_mut()?;
-        if let Some(items) = &mut ctx.items {
-            if !items.is_empty() {
-                let item = &items[0];
-                *items = &items[1..];
-                return Some(RetItem::from_iter_type(item));
-            }
-            ctx.items = None;
+        if !ctx.items.is_empty() {
+            let item = &ctx.items[0];
+            ctx.items = &ctx.items[1..];
+            return Some(RetItem::from_iter_type(item));
         }
 
         if let Some(quadrants) = &mut ctx.quadrants {
@@ -198,7 +189,7 @@ where
                 *quadrants = &quadrants[1..];
                 stack.push(IterStackItem {
                     quadrants: quad.quadrants.as_ref().map(|q| q.as_slice()),
-                    items: quad.items.as_deref(),
+                    items: &quad.items[..quad.next_item_index],
                 });
             } else {
                 ctx.quadrants = None;

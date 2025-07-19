@@ -41,14 +41,15 @@ pub use iter::*;
 /// C: The type used for coordinates
 /// Item: The type to be saved
 /// CAP: The maximum capacity of each level
-#[derive(PartialEq, Eq, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct QuadTree<C, Item, const CAP: usize>
 where
     C: Coordinate,
 {
     boundary: Boundary<C>,
     quadrants: Option<Box<[QuadTree<C, Item, CAP>; 4]>>,
-    items: Option<Vec<(Point<C>, Item)>>,
+    items: [(Point<C>, Item); CAP],
+    next_item_index: usize,
 }
 
 /// Possible errors
@@ -117,7 +118,8 @@ where
         Self {
             boundary,
             quadrants: None,
-            items: None,
+            items: unsafe { std::mem::MaybeUninit::uninit().assume_init() },
+            next_item_index: 0,
         }
     }
 
@@ -156,11 +158,9 @@ where
         let mut sub_tree = self;
         let point = point.into();
         loop {
-            if sub_tree.items.as_ref().map(|i| i.len()).unwrap_or_default() < CAP {
-                sub_tree
-                    .items
-                    .get_or_insert_with(|| Vec::with_capacity(CAP))
-                    .push((point, value));
+            if sub_tree.next_item_index < CAP {
+                sub_tree.items[sub_tree.next_item_index] = (point, value);
+                sub_tree.next_item_index += 1;
                 return;
             }
             let quads = sub_tree.quadrants.get_or_insert_with(|| {
@@ -280,6 +280,26 @@ where
     }
 }
 
+impl<C, Item, const CAP: usize> PartialEq for QuadTree<C, Item, CAP>
+where
+    C: Coordinate,
+    Item: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.boundary == other.boundary
+            && self.quadrants == other.quadrants
+            && self.next_item_index == other.next_item_index
+            && &self.items[..self.next_item_index] == &other.items[..other.next_item_index]
+    }
+}
+
+impl<C, Item, const CAP: usize> Eq for QuadTree<C, Item, CAP>
+where
+    C: Coordinate,
+    Item: Eq,
+{
+}
+
 impl<C> From<(C, C)> for Point<C>
 where
     C: Coordinate,
@@ -334,18 +354,18 @@ mod tests {
             QuadTree {
                 boundary,
                 quadrants: None,
-                items: None,
+                items: [((0, 0).into(), 1); 20],
+                next_item_index: 0
             },
             tree
         );
-        assert_eq!(None, tree.items)
     }
 
     #[test]
     fn insert_single() {
         let mut tree = QuadTree::<_, _, 10>::new(Boundary::new((0, 0), 10, 10));
         assert!(tree.insert_at((10, 10), 1u8).is_ok());
-        assert_eq!(tree.items.unwrap()[0], ((10, 10).into(), 1));
+        assert_eq!(tree.items[0], ((10, 10).into(), 1));
     }
 
     #[test]
@@ -367,24 +387,24 @@ mod tests {
 
         assert!(tree.insert_at((1, 1), 1).is_ok());
         assert!(tree.quadrants.is_none());
-        assert_eq!(tree.items.as_ref().unwrap().len(), 1);
+        assert_eq!(tree.items.len(), 1);
 
         assert!(tree.insert_at((2, 2), 1).is_ok());
-        assert_eq!(tree.items.as_ref().unwrap().len(), 1);
+        assert_eq!(tree.items.len(), 1);
         assert!(tree.quadrants.is_some());
         let quads = tree.quadrants.as_ref().unwrap();
-        assert_eq!(quads[0].items.as_ref().unwrap().len(), 1);
-        assert_eq!(quads[1].items, None);
-        assert_eq!(quads[2].items, None);
-        assert_eq!(quads[3].items, None);
+        assert_eq!(quads[0].items[..quads[0].next_item_index].len(), 1);
+        assert!(quads[1].items[..quads[1].next_item_index].is_empty());
+        assert!(quads[2].items[..quads[2].next_item_index].is_empty());
+        assert!(quads[3].items[..quads[3].next_item_index].is_empty());
 
         assert!(tree.insert_at((7, 7), 1).is_ok());
         assert!(tree.quadrants.is_some());
         let quads = tree.quadrants.as_ref().unwrap();
-        assert_eq!(quads[0].items.as_ref().unwrap().len(), 1);
-        assert_eq!(quads[1].items, None);
-        assert_eq!(quads[2].items, None);
-        assert_eq!(quads[3].items.as_ref().unwrap().len(), 1);
+        assert_eq!(quads[0].items[..quads[0].next_item_index].len(), 1);
+        assert!(quads[1].items[..quads[1].next_item_index].is_empty());
+        assert!(quads[2].items[..quads[2].next_item_index].is_empty());
+        assert_eq!(quads[3].items[..quads[3].next_item_index].len(), 1);
     }
 
     #[test]
