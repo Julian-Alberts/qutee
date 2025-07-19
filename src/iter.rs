@@ -1,31 +1,28 @@
-use crate::{bounds::Capacity, Area, Coordinate, Point, QuadTree};
+use crate::{Area, Coordinate, Point, QuadTree};
 
 /// Query Iterator over items and their coordinates
 #[derive(Clone)]
-pub struct QueryPoints<'a, PU, A, Item, Cap>(QuerySharedData<'a, PU, A, Item, Cap>)
+pub struct QueryPoints<'a, PU, A, Item, const CAP: usize>(QuerySharedData<'a, PU, A, Item, CAP>)
 where
-    Cap: Capacity,
     PU: Coordinate,
     A: Area<PU>;
 
 #[derive(Clone)]
-struct QuerySharedData<'a, C, A, Item, Cap>
+struct QuerySharedData<'a, C, A, Item, const CAP: usize>
 where
     A: Area<C>,
     C: Coordinate,
-    Cap: Capacity,
 {
     area: A,
-    stack: Vec<QueryStackItem<'a, C, Item, Cap>>,
+    stack: Vec<QueryStackItem<'a, C, Item, CAP>>,
 }
 
-impl<'a, C, A, Item, Cap> QuerySharedData<'a, C, A, Item, Cap>
+impl<'a, C, A, Item, const CAP: usize> QuerySharedData<'a, C, A, Item, CAP>
 where
     A: Area<C>,
     C: Coordinate,
-    Cap: Capacity,
 {
-    fn new(tree: &'a QuadTree<C, Item, Cap>, area: A) -> Self {
+    fn new(tree: &'a QuadTree<C, Item, CAP>, area: A) -> Self {
         Self {
             stack: vec![QueryStackItem::new(tree, false, &area)],
             area,
@@ -34,30 +31,27 @@ where
 }
 
 #[derive(Clone)]
-struct QueryStackItem<'a, PU, Item, Cap>
+struct QueryStackItem<'a, PU, Item, const CAP: usize>
 where
-    Cap: Capacity,
     PU: Coordinate,
 {
     is_enclosed_by_area: bool,
-    quadrants: Option<&'a [QuadTree<PU, Item, Cap>]>,
+    quadrants: Option<&'a [QuadTree<PU, Item, CAP>]>,
     items: Option<&'a [(Point<PU>, Item)]>,
 }
 
-impl<'a, PU, Item, Cap, A> QueryPoints<'a, PU, A, Item, Cap>
+impl<'a, PU, Item, const CAP: usize, A> QueryPoints<'a, PU, A, Item, CAP>
 where
-    Cap: Capacity,
     PU: Coordinate,
     A: Area<PU> + Clone,
 {
-    pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>, area: A) -> Self {
+    pub(super) fn new(tree: &'a QuadTree<PU, Item, CAP>, area: A) -> Self {
         Self(QuerySharedData::new(tree, area))
     }
 }
 
-impl<'a, PU, A, Item, Cap> Iterator for QueryPoints<'a, PU, A, Item, Cap>
+impl<'a, PU, A, Item, const CAP: usize> Iterator for QueryPoints<'a, PU, A, Item, CAP>
 where
-    Cap: Capacity,
     PU: Coordinate,
     A: Area<PU>,
 {
@@ -67,14 +61,13 @@ where
     }
 }
 
-fn query_next<'a, TreeItem, C, A, Cap, RetItem>(
-    QuerySharedData { area, stack }: &mut QuerySharedData<'a, C, A, TreeItem, Cap>,
+fn query_next<'a, TreeItem, C, A, const CAP: usize, RetItem>(
+    QuerySharedData { area, stack }: &mut QuerySharedData<'a, C, A, TreeItem, CAP>,
 ) -> Option<&'a RetItem>
 where
     RetItem: FromTreeItem<TreeItem, C>,
     C: Coordinate,
     A: Area<C>,
-    Cap: Capacity,
 {
     'main: loop {
         let ctx = stack.last_mut()?;
@@ -106,14 +99,13 @@ where
     }
 }
 
-impl<'a, C, Item, Cap> QueryStackItem<'a, C, Item, Cap>
+impl<'a, C, Item, const CAP: usize> QueryStackItem<'a, C, Item, CAP>
 where
     C: Coordinate,
-    Cap: Capacity,
 {
     #[inline(always)]
     fn new<A: Area<C>>(
-        tree: &'a QuadTree<C, Item, Cap>,
+        tree: &'a QuadTree<C, Item, CAP>,
         parent_is_enclosed_by_area: bool,
         area: &A,
     ) -> Self {
@@ -127,26 +119,23 @@ where
 
 /// Iterator over all items and their coordinates
 #[derive(Clone)]
-pub struct IterPoints<'a, PU, Item, Cap>(IterSharedData<'a, PU, Item, Cap>)
+pub struct IterPoints<'a, PU, Item, const CAP: usize>(IterSharedData<'a, PU, Item, CAP>)
 where
-    Cap: Capacity,
     PU: Coordinate;
 
 #[derive(Clone)]
-struct IterSharedData<'a, PU, Item, Cap>
+struct IterSharedData<'a, PU, Item, const CAP: usize>
 where
-    Cap: Capacity,
     PU: Coordinate,
 {
-    stack: Vec<IterStackItem<'a, PU, Item, Cap>>,
+    stack: Vec<IterStackItem<'a, PU, Item, CAP>>,
 }
 
-impl<'a, C, Item, Cap> IterSharedData<'a, C, Item, Cap>
+impl<'a, C, Item, const CAP: usize> IterSharedData<'a, C, Item, CAP>
 where
-    Cap: Capacity,
     C: Coordinate,
 {
-    fn new(tree: &'a QuadTree<C, Item, Cap>) -> Self {
+    fn new(tree: &'a QuadTree<C, Item, CAP>) -> Self {
         Self {
             stack: vec![IterStackItem {
                 quadrants: tree.quadrants.as_ref().map(|q| q.as_slice()),
@@ -157,27 +146,25 @@ where
 }
 
 #[derive(Clone)]
-struct IterStackItem<'a, C, Item, Cap>
+struct IterStackItem<'a, C, Item, const CAP: usize>
 where
     C: Coordinate,
 {
-    quadrants: Option<&'a [QuadTree<C, Item, Cap>]>,
+    quadrants: Option<&'a [QuadTree<C, Item, CAP>]>,
     items: Option<&'a [(Point<C>, Item)]>,
 }
 
-impl<'a, PU, Item, Cap> IterPoints<'a, PU, Item, Cap>
+impl<'a, PU, Item, const CAP: usize> IterPoints<'a, PU, Item, CAP>
 where
-    Cap: Capacity,
     PU: Coordinate,
 {
-    pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>) -> Self {
+    pub(super) fn new(tree: &'a QuadTree<PU, Item, CAP>) -> Self {
         Self(IterSharedData::new(tree))
     }
 }
 
-impl<'a, PU, Item, Cap> Iterator for IterPoints<'a, PU, Item, Cap>
+impl<'a, PU, Item, const CAP: usize> Iterator for IterPoints<'a, PU, Item, CAP>
 where
-    Cap: Capacity,
     PU: Coordinate,
 {
     type Item = &'a (Point<PU>, Item);
@@ -187,13 +174,12 @@ where
     }
 }
 
-fn iter_next<'a, C, TreeItem, RetItem, Cap>(
-    IterSharedData { stack }: &mut IterSharedData<'a, C, TreeItem, Cap>,
+fn iter_next<'a, C, TreeItem, RetItem, const CAP: usize>(
+    IterSharedData { stack }: &mut IterSharedData<'a, C, TreeItem, CAP>,
 ) -> Option<&'a RetItem>
 where
     C: Coordinate,
     RetItem: FromTreeItem<TreeItem, C>,
-    Cap: Capacity,
 {
     loop {
         let ctx = stack.last_mut()?;
@@ -227,26 +213,23 @@ where
 /// Query Iterator
 #[derive(Clone)]
 #[repr(transparent)]
-pub struct Query<'a, PU, A, Item, Cap>(QuerySharedData<'a, PU, A, Item, Cap>)
+pub struct Query<'a, PU, A, Item, const CAP: usize>(QuerySharedData<'a, PU, A, Item, CAP>)
 where
-    Cap: Capacity,
     PU: Coordinate,
     A: Area<PU>;
 
-impl<'a, PU, Item, Cap, A> Query<'a, PU, A, Item, Cap>
+impl<'a, PU, Item, const CAP: usize, A> Query<'a, PU, A, Item, CAP>
 where
-    Cap: Capacity,
     PU: Coordinate,
     A: Area<PU> + Clone,
 {
-    pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>, area: A) -> Self {
+    pub(super) fn new(tree: &'a QuadTree<PU, Item, CAP>, area: A) -> Self {
         Self(QuerySharedData::new(tree, area))
     }
 }
 
-impl<'a, PU, A, Item, Cap> Iterator for Query<'a, PU, A, Item, Cap>
+impl<'a, PU, A, Item, const CAP: usize> Iterator for Query<'a, PU, A, Item, CAP>
 where
-    Cap: Capacity,
     PU: Coordinate,
     A: Area<PU>,
 {
@@ -259,24 +242,21 @@ where
 /// Iterator over all items
 #[derive(Clone)]
 #[repr(transparent)]
-pub struct Iter<'a, PU, Item, Cap>(IterSharedData<'a, PU, Item, Cap>)
+pub struct Iter<'a, PU, Item, const CAP: usize>(IterSharedData<'a, PU, Item, CAP>)
 where
-    Cap: Capacity,
     PU: Coordinate;
 
-impl<'a, PU, Item, Cap> Iter<'a, PU, Item, Cap>
+impl<'a, PU, Item, const CAP: usize> Iter<'a, PU, Item, CAP>
 where
-    Cap: Capacity,
     PU: Coordinate,
 {
-    pub(super) fn new(tree: &'a QuadTree<PU, Item, Cap>) -> Self {
+    pub(super) fn new(tree: &'a QuadTree<PU, Item, CAP>) -> Self {
         Self(IterSharedData::new(tree))
     }
 }
 
-impl<'a, PU, Item, Cap> Iterator for Iter<'a, PU, Item, Cap>
+impl<'a, PU, Item, const CAP: usize> Iterator for Iter<'a, PU, Item, CAP>
 where
-    Cap: Capacity,
     PU: Coordinate,
 {
     type Item = &'a Item;

@@ -1,4 +1,4 @@
-use qutee::{AsPoint, Boundary, ConstCap, QuadTree};
+use qutee::{AsPoint, Boundary, QuadTree};
 
 use rand::{Rng, SeedableRng};
 
@@ -18,7 +18,7 @@ impl AsPoint<usize> for QuadTreeEntry {
 
 fn main() {
     let data = parse_data();
-    let mut tree = QuadTree::new_with_const_cap(Boundary::between_points((0, 0), (32_767, 32_767)));
+    let mut tree = QuadTree::new(Boundary::between_points((0, 0), (32_767, 32_767)));
     insert_data(&mut tree, data);
     query_data(&mut tree, Boundary::new((32, 32), 10_000, 20_000));
 }
@@ -36,12 +36,12 @@ fn parse_data() -> impl Iterator<Item = QuadTreeEntry> {
 }
 
 fn insert_data(
-    qt: &mut QuadTree<usize, QuadTreeEntry, ConstCap<16>>,
+    qt: &mut QuadTree<usize, QuadTreeEntry, 16>,
     data: impl Iterator<Item = QuadTreeEntry>,
 ) {
     data.for_each(|item| qt.insert(item).unwrap())
 }
 
-fn query_data(qt: &mut QuadTree<usize, QuadTreeEntry, ConstCap<16>>, area: Boundary<usize>) {
+fn query_data(qt: &mut QuadTree<usize, QuadTreeEntry, 16>, area: Boundary<usize>) {
     let _ = qt.query(area);
 }

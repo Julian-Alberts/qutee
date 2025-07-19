@@ -9,7 +9,7 @@
 //! ```
 //! use qutee::*;
 //! // Create a new quadtree where the area's top left corner is at -10, -10, with a width and height of 20.
-//! let mut tree = QuadTree::new_with_dyn_cap(Boundary::new((-10., -10.), 20., 20.), 5);
+//! let mut tree = QuadTree::<_,_,5>::new(Boundary::new((-10., -10.), 20., 20.));
 //! assert!(tree.insert_at((0.5, 0.1), "A").is_ok());
 //! assert!(tree.insert_at((-1., 1.), "B").is_ok());
 //! // This point is outside the tree
@@ -26,7 +26,6 @@
 //! ```
 
 mod boundary;
-mod bounds;
 mod iter;
 
 use std::{
@@ -35,8 +34,6 @@ use std::{
 };
 
 pub use boundary::*;
-use bounds::Capacity;
-pub use bounds::{ConstCap, DynCap};
 pub use iter::*;
 
 ///
@@ -45,14 +42,13 @@ pub use iter::*;
 /// Item: The type to be saved
 /// CAP: The maximum capacity of each level
 #[derive(PartialEq, Eq, Debug, Clone)]
-pub struct QuadTree<C, Item, Cap = DynCap>
+pub struct QuadTree<C, Item, const CAP: usize>
 where
     C: Coordinate,
 {
     boundary: Boundary<C>,
-    quadrants: Option<Box<[QuadTree<C, Item, Cap>; 4]>>,
+    quadrants: Option<Box<[QuadTree<C, Item, CAP>; 4]>>,
     items: Option<Vec<(Point<C>, Item)>>,
-    capacity: Cap,
 }
 
 /// Possible errors
@@ -105,25 +101,23 @@ where
     }
 }
 
-impl<C, Item, Cap> QuadTree<C, Item, Cap>
+impl<C, Item, const CAP: usize> QuadTree<C, Item, CAP>
 where
-    Cap: Capacity,
     C: Coordinate,
 {
-    /// Create a new quad tree for a given area where each level of the tree has a given capacity.
+    /// Create a new quad tree.
     /// # Example
     /// ```
     /// use qutee::*;
     /// struct MyItem;
-    /// let tree = QuadTree::<_, MyItem, DynCap>::new_with_capacity(Boundary::between_points((10,10), (20,20)), DynCap::new(20));
+    /// let tree = QuadTree::<_, MyItem, 20>::new(Boundary::between_points((10,10), (20,20)));
     /// assert_eq!(tree.capacity(), 20);
     /// ```
-    pub fn new_with_capacity(boundary: Boundary<C>, capacity: Cap) -> Self {
+    pub fn new(boundary: Boundary<C>) -> Self {
         Self {
             boundary,
             quadrants: None,
             items: None,
-            capacity,
         }
     }
 
@@ -133,7 +127,7 @@ where
     /// # Example
     /// ```
     /// use qutee::*;
-    /// let mut tree = QuadTree::<_,_,ConstCap<2>>::new_with_const_cap(Boundary::between_points((0,0), (10,10)));
+    /// let mut tree = QuadTree::<_,_,2>::new(Boundary::between_points((0,0), (10,10)));
     /// assert!(tree.insert_at((5,5), ()).is_ok());
     /// assert!(tree.insert_at((11,11), ()).is_err());
     /// ```
@@ -154,7 +148,7 @@ where
     /// # Example
     /// ```
     /// use qutee::*;
-    /// let mut tree = QuadTree::<_,_,ConstCap<2>>::new_with_const_cap(Boundary::between_points((0,0), (10,10)));
+    /// let mut tree = QuadTree::<_,_,2>::new(Boundary::between_points((0,0), (10,10)));
     /// tree.insert_at_unchecked((5,5), ());
     /// assert_eq!(tree.iter().count(), 1);
     /// ```
@@ -162,22 +156,20 @@ where
         let mut sub_tree = self;
         let point = point.into();
         loop {
-            if sub_tree.items.as_ref().map(|i| i.len()).unwrap_or_default()
-                < sub_tree.capacity.capacity()
-            {
+            if sub_tree.items.as_ref().map(|i| i.len()).unwrap_or_default() < CAP {
                 sub_tree
                     .items
-                    .get_or_insert_with(|| Vec::with_capacity(sub_tree.capacity.capacity()))
+                    .get_or_insert_with(|| Vec::with_capacity(CAP))
                     .push((point, value));
                 return;
             }
             let quads = sub_tree.quadrants.get_or_insert_with(|| {
                 let [b0, b1, b2, b3] = sub_tree.boundary.split();
                 Box::new([
-                    QuadTree::new_with_capacity(b0, sub_tree.capacity),
-                    QuadTree::new_with_capacity(b1, sub_tree.capacity),
-                    QuadTree::new_with_capacity(b2, sub_tree.capacity),
-                    QuadTree::new_with_capacity(b3, sub_tree.capacity),
+                    QuadTree::new(b0),
+                    QuadTree::new(b1),
+                    QuadTree::new(b2),
+                    QuadTree::new(b3),
                 ])
             });
 
@@ -192,7 +184,7 @@ where
     /// # Example
     /// ```
     /// use qutee::*;
-    /// let mut tree = QuadTree::<_,_,ConstCap<2>>::new_with_const_cap(Boundary::between_points((0,0), (10,10)));
+    /// let mut tree = QuadTree::<_,_,2>::new(Boundary::between_points((0,0), (10,10)));
     /// tree.insert_at((3,5), 1);
     /// tree.insert_at((1,0), 2);
     /// tree.insert_at((7,3), 4);
@@ -201,7 +193,7 @@ where
     /// res.sort();
     /// assert_eq!(res, vec![1,4]);
     /// ```
-    pub fn query<A>(&self, area: A) -> Query<'_, C, A, Item, Cap>
+    pub fn query<A>(&self, area: A) -> Query<'_, C, A, Item, CAP>
     where
         A: Area<C>,
     {
@@ -212,7 +204,7 @@ where
     /// # Example
     /// ```
     /// use qutee::*;
-    /// let mut tree = QuadTree::<_,_,ConstCap<2>>::new_with_const_cap(Boundary::between_points((0,0), (10,10)));
+    /// let mut tree = QuadTree::<_,_,2>::new(Boundary::between_points((0,0), (10,10)));
     /// tree.insert_at((3,5), 1);
     /// tree.insert_at((1,0), 2);
     /// tree.insert_at((7,3), 4);
@@ -224,7 +216,7 @@ where
     ///     ((7,3).into(), 4),
     /// ]);
     /// ```
-    pub fn query_points<A>(&self, area: A) -> QueryPoints<'_, C, A, Item, Cap>
+    pub fn query_points<A>(&self, area: A) -> QueryPoints<'_, C, A, Item, CAP>
     where
         A: Area<C>,
     {
@@ -232,12 +224,12 @@ where
     }
 
     /// Get an iterator over all items.
-    pub fn iter(&self) -> Iter<'_, C, Item, Cap> {
+    pub fn iter(&self) -> Iter<'_, C, Item, CAP> {
         Iter::new(self)
     }
 
     /// Get an iterator over all items and their coordinates.
-    pub fn iter_points(&self) -> IterPoints<'_, C, Item, Cap> {
+    pub fn iter_points(&self) -> IterPoints<'_, C, Item, CAP> {
         IterPoints::new(self)
     }
 
@@ -248,13 +240,12 @@ where
 
     /// Returns the capacity
     pub fn capacity(&self) -> usize {
-        self.capacity.capacity()
+        CAP
     }
 }
 
-impl<C, Item, Cap> QuadTree<C, Item, Cap>
+impl<C, Item, const CAP: usize> QuadTree<C, Item, CAP>
 where
-    Cap: Capacity,
     C: Coordinate,
     Item: AsPoint<C>,
 {
@@ -273,7 +264,7 @@ where
     ///         (self.x, self.y).into()
     ///     }
     /// }
-    /// let mut quad_tree = QuadTree::new_with_dyn_cap(Boundary::between_points((0,0),(10,10)), 5);
+    /// let mut quad_tree = QuadTree::<_,_,5>::new(Boundary::between_points((0,0),(10,10)));
     /// assert!(quad_tree.insert(Item {
     ///     x: 5,
     ///     y: 5,
@@ -286,27 +277,6 @@ where
     /// Same as `insert` except that no bounds check is performed.
     pub fn insert_unchecked(&mut self, item: Item) {
         self.insert_at_unchecked(item.as_point(), item)
-    }
-}
-
-impl<C, Item> QuadTree<C, Item, DynCap>
-where
-    C: Coordinate,
-{
-    /// Create a new QuadTree
-    pub fn new_with_dyn_cap(boundary: Boundary<C>, cap: usize) -> Self {
-        Self::new_with_capacity(boundary, DynCap(cap))
-    }
-}
-
-impl<C, Item, const CAP: usize> QuadTree<C, Item, ConstCap<CAP>>
-where
-    C: Coordinate,
-{
-    /// Create a new QuadTree with a constant capacity
-    pub fn new_with_const_cap(boundary: Boundary<C>) -> Self {
-        let capacity = ConstCap;
-        Self::new_with_capacity(boundary, capacity)
     }
 }
 
@@ -354,18 +324,17 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{bounds::ConstCap, Boundary, Coordinate, Point, QuadTree, QuadTreeError};
+    use crate::{Boundary, Coordinate, Point, QuadTree, QuadTreeError};
 
     #[test]
     fn create_quad_tree() {
         let boundary = Boundary::new((0, 0), 10, 10);
-        let tree = QuadTree::<usize, u8, ConstCap<20>>::new_with_const_cap(boundary.clone());
+        let tree = QuadTree::<usize, u8, 20>::new(boundary.clone());
         assert_eq!(
             QuadTree {
                 boundary,
                 quadrants: None,
                 items: None,
-                capacity: ConstCap,
             },
             tree
         );
@@ -374,14 +343,14 @@ mod tests {
 
     #[test]
     fn insert_single() {
-        let mut tree = QuadTree::new_with_dyn_cap(Boundary::new((0, 0), 10, 10), 10);
+        let mut tree = QuadTree::<_, _, 10>::new(Boundary::new((0, 0), 10, 10));
         assert!(tree.insert_at((10, 10), 1u8).is_ok());
         assert_eq!(tree.items.unwrap()[0], ((10, 10).into(), 1));
     }
 
     #[test]
     fn insert_out_of_bounds() {
-        let mut tree = QuadTree::new_with_dyn_cap(Boundary::new((0, 0), 10, 10), 10);
+        let mut tree = QuadTree::<_, _, 10>::new(Boundary::new((0, 0), 10, 10));
         assert_eq!(
             tree.insert_at((20, 20), 1u8),
             Err(QuadTreeError::OutOfBounds(
@@ -393,7 +362,7 @@ mod tests {
 
     #[test]
     fn insert_more_than_capacity() {
-        let mut tree = QuadTree::new_with_dyn_cap(Boundary::new((0, 0), 10, 10), 1);
+        let mut tree = QuadTree::<_, _, 1>::new(Boundary::new((0, 0), 10, 10));
         assert!(tree.quadrants.is_none());
 
         assert!(tree.insert_at((1, 1), 1).is_ok());
@@ -420,7 +389,7 @@ mod tests {
 
     #[test]
     fn query() {
-        let mut tree = QuadTree::new_with_dyn_cap(Boundary::new((-10, -10), 20, 20), 2);
+        let mut tree = QuadTree::<_, _, 2>::new(Boundary::new((-10, -10), 20, 20));
         let mut expected = Vec::new();
         for i in 1..10 {
             assert!(tree.insert_at((i, i), i).is_ok());
@@ -443,7 +412,7 @@ mod tests {
 
     #[test]
     fn iter() {
-        let mut tree = QuadTree::new_with_dyn_cap(Boundary::new((-10, -10), 20, 20), 2);
+        let mut tree = QuadTree::<_, _, 2>::new(Boundary::new((-10, -10), 20, 20));
         let mut expected = Vec::new();
         for i in 1..10 {
             assert!(tree.insert_at((i, i), i).is_ok());
@@ -507,8 +476,7 @@ mod tests {
                 (self.x, self.y).into()
             }
         }
-        let mut qt =
-            super::QuadTree::new_with_dyn_cap(Boundary::between_points((0, 0), (10, 10)), 5);
+        let mut qt = super::QuadTree::<_, _, 5>::new(Boundary::between_points((0, 0), (10, 10)));
         assert!(qt
             .insert(TmpItem {
                 x: 5,
