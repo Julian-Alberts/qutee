@@ -161,17 +161,28 @@ where
             if sub_tree.next_item_index < CAP {
                 sub_tree.items[sub_tree.next_item_index] = (point, value);
                 sub_tree.next_item_index += 1;
+                if sub_tree.next_item_index >= CAP {
+                    let [b0, b1, b2, b3] = sub_tree.boundary.split();
+                    // The quadrants are created at this point to reduce the number of branches.
+                    // If we create them before the first insertion we need to check for their
+                    // existence every time we insert an item.
+                    // The additional cost for unused quadrants is minimal compared to the
+                    // performance gain.
+                    sub_tree.quadrants = Some(Box::new([
+                        QuadTree::new(b0),
+                        QuadTree::new(b1),
+                        QuadTree::new(b2),
+                        QuadTree::new(b3),
+                    ]));
+                }
                 return;
             }
-            let quads = sub_tree.quadrants.get_or_insert_with(|| {
-                let [b0, b1, b2, b3] = sub_tree.boundary.split();
-                Box::new([
-                    QuadTree::new(b0),
-                    QuadTree::new(b1),
-                    QuadTree::new(b2),
-                    QuadTree::new(b3),
-                ])
-            });
+            // SAFETY:
+            // We assume that quadrants is Some because sub_tree.quadrants is set right after
+            // next_item_index reaches CAP.
+            // This is only true if no other code modifies next_item_index or quadrants in
+            // between.
+            let quads = unsafe { sub_tree.quadrants.as_mut().unwrap_unchecked() };
 
             let is_in_right_half = (quads[0].boundary.p2.x < point.x) as usize;
             let is_in_bottom_half = (quads[0].boundary.p2.y < point.y) as usize;
@@ -386,7 +397,7 @@ mod tests {
         assert!(tree.quadrants.is_none());
 
         assert!(tree.insert_at((1, 1), 1).is_ok());
-        assert!(tree.quadrants.is_none());
+        assert!(tree.quadrants.is_some());
         assert_eq!(tree.items.len(), 1);
 
         assert!(tree.insert_at((2, 2), 1).is_ok());
