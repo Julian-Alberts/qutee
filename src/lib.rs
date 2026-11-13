@@ -25,6 +25,7 @@
 //! assert!(iter.next().is_none());
 //! ```
 
+mod allocator;
 mod boundary;
 mod iter;
 
@@ -36,20 +37,39 @@ use std::{
 pub use boundary::*;
 pub use iter::*;
 
+use crate::allocator::ItemAllocator;
+
+const ALLOCATION_SIZE: usize = 256;
+
 ///
 /// # Parameter
 /// C: The type used for coordinates
 /// Item: The type to be saved
 /// CAP: The maximum capacity of each level
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct QuadTree<C, Item, const CAP: usize>
 where
     C: Coordinate,
 {
     boundary: Boundary<C>,
     quadrants: Option<Box<[QuadTree<C, Item, CAP>; 4]>>,
-    items: [(Point<C>, Item); CAP],
+    items: Box<[(Point<C>, Item)], ItemAllocator<(Point<C>, Item)>>,
     next_item_index: usize,
+    allocator: ItemAllocator<(Point<C>, Item)>,
+}
+
+impl<C: Debug, Item: Debug, const CAP: usize> Debug for QuadTree<C, Item, CAP>
+where
+    C: Coordinate,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("QuadTree")
+            .field("boundary", &self.boundary)
+            .field("quadrants", &self.quadrants)
+            .field("items", &self.items)
+            .field("next_item_index", &self.next_item_index)
+            .finish()
+    }
 }
 
 /// Possible errors
@@ -115,11 +135,28 @@ where
     /// assert_eq!(tree.capacity(), 20);
     /// ```
     pub fn new(boundary: Boundary<C>) -> Self {
+        let item_allocator = ItemAllocator::<(Point<C>, Item)>::new(ALLOCATION_SIZE);
+        let mut items: Vec<(Point<C>, Item), _> =
+            Vec::with_capacity_in(CAP, item_allocator.clone());
+        unsafe { items.set_len(CAP) };
         Self {
             boundary,
             quadrants: None,
-            items: unsafe { std::mem::MaybeUninit::uninit().assume_init() },
+            items: items.into_boxed_slice(),
             next_item_index: 0,
+            allocator: item_allocator,
+        }
+    }
+
+    fn new_with_alloc(boundary: Boundary<C>, alloc: ItemAllocator<(Point<C>, Item)>) -> Self {
+        let mut items: Vec<(Point<C>, Item), _> = Vec::with_capacity_in(CAP, alloc.clone());
+        unsafe { items.set_len(CAP) };
+        Self {
+            boundary,
+            quadrants: None,
+            items: items.into_boxed_slice(),
+            next_item_index: 0,
+            allocator: alloc,
         }
     }
 
@@ -169,10 +206,10 @@ where
                     // The additional cost for unused quadrants is minimal compared to the
                     // performance gain.
                     sub_tree.quadrants = Some(Box::new([
-                        QuadTree::new(b0),
-                        QuadTree::new(b1),
-                        QuadTree::new(b2),
-                        QuadTree::new(b3),
+                        QuadTree::new_with_alloc(b0, sub_tree.allocator.clone()),
+                        QuadTree::new_with_alloc(b1, sub_tree.allocator.clone()),
+                        QuadTree::new_with_alloc(b2, sub_tree.allocator.clone()),
+                        QuadTree::new_with_alloc(b3, sub_tree.allocator.clone()),
                     ]));
                 }
                 return;
@@ -355,18 +392,20 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{Boundary, Coordinate, Point, QuadTree, QuadTreeError};
+    use crate::{allocator::ItemAllocator, Boundary, Coordinate, Point, QuadTree, QuadTreeError};
 
     #[test]
     fn create_quad_tree() {
         let boundary = Boundary::new((0, 0), 10, 10);
         let tree = QuadTree::<usize, u8, 20>::new(boundary.clone());
+        let allocator = ItemAllocator::new(256);
         assert_eq!(
             QuadTree {
                 boundary,
                 quadrants: None,
-                items: [((0, 0).into(), 1); 20],
-                next_item_index: 0
+                items: Box::new_in([((0, 0).into(), 1); 20], allocator.clone()),
+                next_item_index: 0,
+                allocator,
             },
             tree
         );
